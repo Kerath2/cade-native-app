@@ -5,7 +5,10 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import '../global.css';
+import Toast from 'react-native-toast-message';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthGuard } from '@/components/AuthGuard';
 import { useColorScheme } from '@/components/useColorScheme';
 
 export {
@@ -14,8 +17,8 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  // Ensure that reloading on `/login` keeps the initial route.
+  initialRouteName: 'login',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -49,11 +52,41 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AuthGuard>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="login" />
+            <Stack.Screen name="change-password" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen 
+              name="session/[id]" 
+              options={{ 
+                headerShown: true,
+                title: 'Sesión',
+                headerBackTitle: 'Atrás'
+              }} 
+            />
+            <Stack.Screen 
+              name="speaker/[id]" 
+              options={{ 
+                headerShown: true,
+                title: 'Speaker',
+                headerBackTitle: 'Atrás'
+              }} 
+            />
+            <Stack.Screen 
+              name="section/[id]" 
+              options={{ 
+                headerShown: true,
+                title: 'Sección',
+                headerBackTitle: 'Atrás'
+              }} 
+            />
+          </Stack>
+        </AuthGuard>
+        <Toast />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
