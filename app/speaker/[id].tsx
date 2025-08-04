@@ -18,18 +18,18 @@ import {
   ExternalLink 
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { speakersApi } from '@/services/api';
+import { Speaker } from '@/types';
 
-interface SpeakerDetail {
-  id: number;
-  name: string;
-  position?: string;
-  company?: string;
-  bio?: string;
-  image?: string;
-  email?: string;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
-  role: 'SPEAKER' | 'MODERATOR' | 'PANELIST';
-  sessions: any[];
+interface SpeakerDetail extends Speaker {
+  speakerSessions?: {
+    session: {
+      id: number;
+      title: string;
+      startsAt: string;
+      endsAt: string;
+    };
+  }[];
 }
 
 export default function SpeakerDetailPage() {
@@ -45,33 +45,9 @@ export default function SpeakerDetailPage() {
   const loadSpeaker = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API call to load speaker details
-      console.log('Loading speaker:', id);
-      // Mock data for now
-      setSpeaker({
-        id: parseInt(id),
-        name: 'María González',
-        position: 'CEO',
-        company: 'TechCorp Perú',
-        bio: 'María González es una líder empresarial reconocida con más de 15 años de experiencia en transformación digital y gestión estratégica. Ha dirigido múltiples iniciativas de innovación tecnológica en el sector corporativo peruano, siendo pionera en la implementación de soluciones digitales que han revolucionado los procesos empresariales tradicionales.\n\nCon una sólida formación en ingeniería de sistemas y un MBA en gestión estratégica, María ha liderado equipos multidisciplinarios en proyectos de gran envergadura, logrando incrementos significativos en la eficiencia operacional y la satisfacción del cliente.\n\nActualmente, como CEO de TechCorp Perú, está enfocada en desarrollar un ecosistema tecnológico sostenible que impulse el crecimiento económico del país a través de la innovación y la digitalización empresarial.',
-        email: 'maria.gonzalez@techcorp.pe',
-        gender: 'FEMALE',
-        role: 'SPEAKER',
-        sessions: [
-          {
-            id: 1,
-            title: 'El futuro de la economía digital',
-            startsAt: '2025-11-15T10:30:00Z',
-            endsAt: '2025-11-15T12:00:00Z',
-          },
-          {
-            id: 3,
-            title: 'Innovación y liderazgo empresarial',
-            startsAt: '2025-11-15T16:00:00Z',
-            endsAt: '2025-11-15T17:30:00Z',
-          },
-        ],
-      });
+      console.log('Loading speaker from API:', id);
+      const speakerData = await speakersApi.getSpeakerById(parseInt(id));
+      setSpeaker(speakerData);
     } catch (error) {
       console.error('Error loading speaker:', error);
       Alert.alert('Error', 'No se pudo cargar la información del speaker');
@@ -80,37 +56,39 @@ export default function SpeakerDetailPage() {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'SPEAKER':
-        return 'bg-blue-100 text-blue-800';
-      case 'MODERATOR':
-        return 'bg-green-100 text-green-800';
-      case 'PANELIST':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getTypeColor = (speaker: Speaker) => {
+    if (speaker.isHost) return 'bg-red-100 text-red-800';
+    if (speaker.isCommittee) return 'bg-green-100 text-green-800';
+    return 'bg-blue-100 text-blue-800';
   };
 
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'SPEAKER':
-        return 'Speaker';
-      case 'MODERATOR':
-        return 'Moderador';
-      case 'PANELIST':
-        return 'Panelista';
-      default:
-        return role;
-    }
+  const getTypeText = (speaker: Speaker) => {
+    if (speaker.isHost) return 'Anfitrión';
+    if (speaker.isCommittee) return 'Comité';
+    return 'Speaker';
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      if (!dateString) return "00:00";
+      
+      const date = new Date(dateString);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date:", dateString);
+        return "00:00";
+      }
+      
+      return date.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false, // Formato 24 horas
+      });
+    } catch (error) {
+      console.error("Error formatting time:", error, dateString);
+      return "00:00";
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -158,9 +136,9 @@ export default function SpeakerDetailPage() {
 
           <View className="flex-row items-start">
             <View className="mr-4">
-              {speaker.image ? (
+              {speaker.picture ? (
                 <Image
-                  source={{ uri: speaker.image }}
+                  source={{ uri: speaker.picture }}
                   className="w-24 h-24 rounded-full"
                 />
               ) : (
@@ -172,27 +150,23 @@ export default function SpeakerDetailPage() {
 
             <View className="flex-1">
               <Text className="text-2xl font-bold text-gray-800 mb-2">
-                {speaker.name}
+                {speaker.name} {speaker.lastName}
               </Text>
               
-              {speaker.position && (
-                <Text className="text-gray-600 text-lg mb-2">
-                  {speaker.position}
-                </Text>
-              )}
+              <Text className="text-gray-600 text-lg mb-2">
+                {speaker.position}
+              </Text>
               
-              {speaker.company && (
-                <View className="flex-row items-center mb-3">
-                  <Building size={16} color="#6b7280" />
-                  <Text className="text-gray-500 ml-2">
-                    {speaker.company}
-                  </Text>
-                </View>
-              )}
+              <View className="flex-row items-center mb-3">
+                <Building size={16} color="#6b7280" />
+                <Text className="text-gray-500 ml-2">
+                  {speaker.country}
+                </Text>
+              </View>
 
-              <View className={`self-start px-3 py-1 rounded-full ${getRoleColor(speaker.role)}`}>
-                <Text className={`text-sm font-semibold ${getRoleColor(speaker.role).split(' ')[1]}`}>
-                  {getRoleText(speaker.role)}
+              <View className={`self-start px-3 py-1 rounded-full ${getTypeColor(speaker)}`}>
+                <Text className={`text-sm font-semibold ${getTypeColor(speaker).split(' ')[1]}`}>
+                  {getTypeText(speaker)}
                 </Text>
               </View>
             </View>
@@ -200,53 +174,36 @@ export default function SpeakerDetailPage() {
         </View>
 
         {/* Biography */}
-        {speaker.bio && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
-              Biografía
-            </Text>
-            <Text className="text-gray-600 leading-6">
-              {speaker.bio}
-            </Text>
-          </View>
-        )}
-
-        {/* Contact */}
-        {speaker.email && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
-              Contacto
-            </Text>
-            <View className="flex-row items-center">
-              <Mail size={16} color="#6b7280" />
-              <Text className="text-gray-600 ml-2">
-                {speaker.email}
-              </Text>
-            </View>
-          </View>
-        )}
+        <View className="bg-white px-6 py-6 mt-4">
+          <Text className="text-lg font-semibold text-gray-800 mb-3">
+            Biografía
+          </Text>
+          <Text className="text-gray-600 leading-6">
+            {speaker.bio}
+          </Text>
+        </View>
 
         {/* Sessions */}
-        {speaker.sessions.length > 0 && (
+        {speaker.speakerSessions && speaker.speakerSessions.length > 0 && (
           <View className="bg-white px-6 py-6 mt-4">
             <Text className="text-lg font-semibold text-gray-800 mb-4">
               Sesiones
             </Text>
-            {speaker.sessions.map((session, index) => (
+            {speaker.speakerSessions.map((speakerSession, index) => (
               <TouchableOpacity
-                key={session.id}
+                key={speakerSession.session.id}
                 className="py-4 border-b border-gray-100 last:border-b-0"
-                onPress={() => router.push(`/session/${session.id}`)}
+                onPress={() => router.push(`/session/${speakerSession.session.id}`)}
               >
                 <View className="flex-row justify-between items-start">
                   <View className="flex-1 mr-3">
                     <Text className="text-gray-800 font-semibold mb-1">
-                      {session.title}
+                      {speakerSession.session.title}
                     </Text>
                     <View className="flex-row items-center">
                       <Calendar size={14} color="#6b7280" />
                       <Text className="text-gray-500 text-sm ml-1">
-                        {formatDate(session.startsAt)} • {formatTime(session.startsAt)} - {formatTime(session.endsAt)}
+                        {formatDate(speakerSession.session.startsAt)} • {formatTime(speakerSession.session.startsAt)} - {formatTime(speakerSession.session.endsAt)}
                       </Text>
                     </View>
                   </View>

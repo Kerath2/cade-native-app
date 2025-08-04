@@ -7,18 +7,13 @@ import {
   SafeAreaView,
   RefreshControl,
   TextInput,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Search, Calendar, Clock, ChevronRight } from 'lucide-react-native';
+import { sectionsApi } from '@/services/api';
 
-interface Section {
-  id: number;
-  name: string;
-  description: string;
-  startsAt: string;
-  endsAt: string;
-  sessions: any[];
-}
+import { Section } from '@/types';
 
 export default function SectionsPage() {
   const [sections, setSections] = useState<Section[]>([]);
@@ -38,37 +33,12 @@ export default function SectionsPage() {
   const loadSections = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API call to load sections
-      console.log('Loading sections...');
-      // Mock data for now
-      setSections([
-        {
-          id: 1,
-          name: 'Sesión de Apertura',
-          description: 'Inauguración oficial del evento CADE Ejecutivos 2025',
-          startsAt: '2025-11-15T09:00:00Z',
-          endsAt: '2025-11-15T10:00:00Z',
-          sessions: [1],
-        },
-        {
-          id: 2,
-          name: 'Transformación Digital',
-          description: 'El impacto de la tecnología en los negocios modernos',
-          startsAt: '2025-11-15T10:30:00Z',
-          endsAt: '2025-11-15T12:00:00Z',
-          sessions: [2, 3],
-        },
-        {
-          id: 3,
-          name: 'Sostenibilidad Empresarial',
-          description: 'Estrategias para un futuro sostenible en los negocios',
-          startsAt: '2025-11-15T14:00:00Z',
-          endsAt: '2025-11-15T15:30:00Z',
-          sessions: [4],
-        },
-      ]);
+      console.log('Loading sections from API...');
+      const sectionsData = await sectionsApi.getSections();
+      setSections(sectionsData);
     } catch (error) {
       console.error('Error loading sections:', error);
+      Alert.alert('Error', 'No se pudieron cargar las secciones');
     } finally {
       setLoading(false);
     }
@@ -82,8 +52,8 @@ export default function SectionsPage() {
 
     const filtered = sections.filter(
       (section) =>
-        section.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        section.description.toLowerCase().includes(searchQuery.toLowerCase())
+        section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        section.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredSections(filtered);
   };
@@ -95,10 +65,26 @@ export default function SectionsPage() {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      if (!dateString) return "00:00";
+      
+      const date = new Date(dateString);
+      
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        console.warn("Invalid date:", dateString);
+        return "00:00";
+      }
+      
+      return date.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false, // Formato 24 horas
+      });
+    } catch (error) {
+      console.error("Error formatting time:", error, dateString);
+      return "00:00";
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -118,11 +104,13 @@ export default function SectionsPage() {
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-1 mr-3">
           <Text className="text-lg font-bold text-gray-800 mb-1">
-            {section.name}
+            {section.title}
           </Text>
-          <Text className="text-gray-600 text-sm leading-5">
-            {section.description}
-          </Text>
+          {section.description && (
+            <Text className="text-gray-600 text-sm leading-5">
+              {section.description}
+            </Text>
+          )}
         </View>
         <ChevronRight size={20} color="#9ca3af" />
       </View>
@@ -167,10 +155,6 @@ export default function SectionsPage() {
         }
       >
         <View className="px-6 py-6">
-          <Text className="text-2xl font-bold text-gray-800 mb-6">
-            Secciones del Evento
-          </Text>
-          
           {filteredSections.length > 0 ? (
             filteredSections.map(renderSectionCard)
           ) : (

@@ -62,25 +62,19 @@ function RootLayoutNav() {
             <Stack.Screen 
               name="session/[id]" 
               options={{ 
-                headerShown: true,
-                title: 'Sesión',
-                headerBackTitle: 'Atrás'
+                headerShown: false
               }} 
             />
             <Stack.Screen 
               name="speaker/[id]" 
               options={{ 
-                headerShown: true,
-                title: 'Speaker',
-                headerBackTitle: 'Atrás'
+                headerShown: false
               }} 
             />
             <Stack.Screen 
               name="section/[id]" 
               options={{ 
-                headerShown: true,
-                title: 'Sección',
-                headerBackTitle: 'Atrás'
+                headerShown: false
               }} 
             />
           </Stack>

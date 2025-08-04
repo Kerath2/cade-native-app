@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // Create axios instance
 const axiosClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080/cade-ejecutivos-app/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Home, Users, Calendar, MessageCircle, Heart } from 'lucide-react-native';
+import { Home, Users, Calendar, MessageCircle, MoreHorizontal } from 'lucide-react-native';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
@@ -32,23 +32,12 @@ export default function TabLayout() {
           fontSize: 12,
           fontWeight: '500',
         },
-        headerShown: useClientOnlyValue(false, true),
+        headerShown: false,
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Inicio',
-          headerTitle: 'CADE Ejecutivos 2025',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon IconComponent={Home} color={color} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="sections"
         options={{
-          title: 'Secciones',
-          headerTitle: 'Secciones',
+          title: 'Agenda',
           tabBarIcon: ({ color }) => (
             <TabBarIcon IconComponent={Calendar} color={color} />
           ),
@@ -57,10 +46,18 @@ export default function TabLayout() {
       <Tabs.Screen
         name="speakers"
         options={{
-          title: 'Speakers',
-          headerTitle: 'Speakers',
+          title: 'Expositores',
           tabBarIcon: ({ color }) => (
             <TabBarIcon IconComponent={Users} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Inicio',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon IconComponent={Home} color={color} />
           ),
         }}
       />
@@ -68,7 +65,6 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: 'Chat',
-          headerTitle: 'Chat',
           tabBarIcon: ({ color }) => (
             <TabBarIcon IconComponent={MessageCircle} color={color} />
           ),
@@ -77,10 +73,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
-          title: 'Favoritos',
-          headerTitle: 'Favoritos',
+          title: 'Más',
           tabBarIcon: ({ color }) => (
-            <TabBarIcon IconComponent={Heart} color={color} />
+            <TabBarIcon IconComponent={MoreHorizontal} color={color} />
           ),
         }}
       />

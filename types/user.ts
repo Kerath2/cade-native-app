@@ -14,12 +14,14 @@ export interface User {
 export interface Speaker {
   id: number;
   name: string;
-  position?: string;
-  company?: string;
-  bio?: string;
-  image?: string;
+  lastName: string;
+  position: string;
+  bio: string;
+  country: string;
+  picture: string;
+  isCommittee: boolean;
+  isHost: boolean;
   gender: 'MALE' | 'FEMALE' | 'OTHER';
-  role: 'SPEAKER' | 'MODERATOR' | 'PANELIST';
   createdAt: Date;
   updatedAt: Date;
 }
