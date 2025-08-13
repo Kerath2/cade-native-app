@@ -15,6 +15,7 @@ import {
   MessageCircle,
   MoreHorizontal,
 } from "lucide-react-native";
+import Colors from '@/constants/Colors';
 
 const { width } = Dimensions.get('window');
 const CONTAINER_PADDING = 20; // padding horizontal del contenedor
@@ -80,10 +81,11 @@ export default function FloatingTabBar({ state, descriptors, navigation }: Botto
   const colorScheme = useColorScheme();
   
   const isDark = colorScheme === 'dark';
-  const tabBarBg = isDark ? '#1F2937' : '#FFFFFF';
-  const circleBg = '#2563EB';
-  const activeColor = '#FFFFFF';
-  const inactiveColor = isDark ? '#9CA3AF' : '#6B7280';
+  const colors = Colors[isDark ? 'dark' : 'light'];
+  const tabBarBg = colors.tabBarBackground;
+  const circleBg = colors.tabActiveBackground;
+  const activeColor = colors.tabActiveColor;
+  const inactiveColor = colors.tabInactiveColor;
 
   useEffect(() => {
     const activeIndex = state.index;
