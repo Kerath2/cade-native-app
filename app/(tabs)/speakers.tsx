@@ -9,10 +9,12 @@ import {
   TextInput,
   Image,
   Alert,
+  useColorScheme,
 } from "react-native";
 import { router } from "expo-router";
 import { Search, User, Building, ChevronRight } from "lucide-react-native";
 import { speakersApi } from "@/services/api";
+import Colors from "@/constants/Colors";
 
 import { Speaker } from "@/types";
 
@@ -22,6 +24,8 @@ export default function SpeakersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
   useEffect(() => {
     loadSpeakers();
@@ -68,9 +72,18 @@ export default function SpeakersPage() {
   };
 
   const getTypeColor = (speaker: Speaker) => {
-    if (speaker.isHost) return "bg-red-100 text-red-800";
-    if (speaker.isCommittee) return "bg-green-100 text-green-800";
-    return "bg-blue-100 text-blue-800";
+    if (speaker.isHost) return {
+      bg: colors.error + '20', // 20% opacity
+      text: colorScheme === 'dark' ? colors.error : colors.error
+    };
+    if (speaker.isCommittee) return {
+      bg: colors.success + '20',
+      text: colorScheme === 'dark' ? colors.success : colors.success
+    };
+    return {
+      bg: colors.primary + '20',
+      text: colorScheme === 'dark' ? colors.primary : colors.primary
+    };
   };
 
   const getTypeText = (speaker: Speaker) => {
@@ -79,52 +92,81 @@ export default function SpeakersPage() {
     return "Speaker";
   };
 
-  const renderSpeakerCard = (speaker: Speaker) => (
-    <TouchableOpacity
-      key={speaker.id}
-      className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100"
-      onPress={() => router.push(`/speaker/${speaker.id}`)}
-    >
-      <View className="flex-row items-start">
-        <View className="mr-4">
-          {speaker.picture ? (
-            <Image
-              source={{ uri: speaker.picture }}
-              className="w-16 h-16 rounded-full"
-            />
-          ) : (
-            <View className="w-16 h-16 rounded-full bg-gray-200 items-center justify-center">
-              <User size={24} color="#6b7280" />
-            </View>
-          )}
-        </View>
-
-        <View className="flex-1">
-          <View className="flex-row items-start justify-between ">
-            <View className="flex-1 mr-3">
-              <Text className="text-lg font-bold text-gray-800 mb-1">
-                {speaker.name} {speaker.lastName}
-              </Text>
-            </View>
-            <ChevronRight size={20} color="#9ca3af" />
+  const renderSpeakerCard = (speaker: Speaker) => {
+    const typeColors = getTypeColor(speaker);
+    return (
+      <TouchableOpacity
+        key={speaker.id}
+        style={{ 
+          backgroundColor: colors.cardBackground, 
+          borderColor: colors.cardBorder,
+          shadowColor: colors.cardShadow 
+        }}
+        className="rounded-xl p-4 mb-4 shadow-sm border"
+        onPress={() => router.push(`/speaker/${speaker.id}`)}
+      >
+        <View className="flex-row items-start">
+          <View className="mr-4">
+            {speaker.picture ? (
+              <Image
+                source={{ uri: speaker.picture }}
+                className="w-16 h-16 rounded-full"
+              />
+            ) : (
+              <View style={{ backgroundColor: colors.backgroundTertiary }} className="w-16 h-16 rounded-full items-center justify-center">
+                <User size={24} color={colors.textTertiary} />
+              </View>
+            )}
           </View>
 
-          <Text className="text-gray-600 text-sm leading-5" numberOfLines={2}>
-            {speaker.bio}
-          </Text>
+          <View className="flex-1">
+            <View className="flex-row items-start justify-between mb-2">
+              <View className="flex-1 mr-3">
+                <Text style={{ color: colors.text }} className="text-lg font-bold mb-1">
+                  {speaker.name} {speaker.lastName}
+                </Text>
+                <Text style={{ color: colors.textSecondary }} className="text-sm mb-1">
+                  {speaker.position}
+                </Text>
+                <View className="flex-row items-center mb-2">
+                  <Building size={12} color={colors.textTertiary} />
+                  <Text style={{ color: colors.textTertiary }} className="text-xs ml-1">
+                    {speaker.country}
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color={colors.textTertiary} />
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <Text style={{ color: colors.textSecondary }} className="text-sm leading-5 flex-1 mr-2" numberOfLines={2}>
+                {speaker.bio}
+              </Text>
+              <View 
+                style={{ backgroundColor: typeColors.bg }}
+                className="px-2 py-1 rounded-full"
+              >
+                <Text style={{ color: typeColors.text }} className="text-xs font-semibold">
+                  {getTypeText(speaker)}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="px-6 py-4 bg-white border-b border-gray-200">
-        <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
-          <Search size={20} color="#6b7280" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
+      <View style={{ backgroundColor: colors.background, borderBottomColor: colors.border }} className="px-6 py-4 border-b">
+        <View style={{ backgroundColor: colors.backgroundTertiary }} className="flex-row items-center rounded-lg px-3 py-2">
+          <Search size={20} color={colors.textTertiary} />
           <TextInput
-            className="flex-1 ml-3 text-gray-800"
+            style={{ color: colors.text }}
+            className="flex-1 ml-3"
             placeholder="Buscar speakers..."
+            placeholderTextColor={colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCorrect={false}
@@ -142,9 +184,9 @@ export default function SpeakersPage() {
           {filteredSpeakers.length > 0 ? (
             filteredSpeakers.map(renderSpeakerCard)
           ) : (
-            <View className="bg-white rounded-xl p-8 items-center">
-              <User size={48} color="#d1d5db" />
-              <Text className="text-gray-500 text-center mt-4">
+            <View style={{ backgroundColor: colors.cardBackground }} className="rounded-xl p-8 items-center">
+              <User size={48} color={colors.textTertiary} />
+              <Text style={{ color: colors.textTertiary }} className="text-center mt-4">
                 {searchQuery
                   ? "No se encontraron speakers"
                   : "No hay speakers disponibles"}
@@ -152,9 +194,10 @@ export default function SpeakersPage() {
               {searchQuery && (
                 <TouchableOpacity
                   onPress={() => setSearchQuery("")}
-                  className="mt-3 px-4 py-2 bg-blue-600 rounded-lg"
+                  style={{ backgroundColor: colors.buttonPrimary }}
+                  className="mt-3 px-4 py-2 rounded-lg"
                 >
-                  <Text className="text-white font-semibold">
+                  <Text style={{ color: colors.buttonPrimaryText }} className="font-semibold">
                     Limpiar búsqueda
                   </Text>
                 </TouchableOpacity>

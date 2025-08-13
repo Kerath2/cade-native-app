@@ -1,108 +1,136 @@
-// Sistema de colores parametrizado para modo claro y oscuro
+// Sistema de colores inspirado en la paleta peruana
 const Colors = {
   light: {
-    // Colores principales
-    primary: '#2563EB',
-    primaryHover: '#1D4ED8',
-    primaryLight: '#EFF6FF',
+    // Colores principales (Rojo peruano y dorado)
+    primary: '#D87C7C',
+    primaryHover: '#A65D5D',
+    primaryLight: '#F2E9E4',
+    primaryAccent: '#EAC36C',
     
-    // Colores de fondo
+    // Colores de fondo (Tonos cálidos y neutros)
     background: '#FFFFFF',
-    backgroundSecondary: '#F9FAFB',
-    backgroundTertiary: '#F3F4F6',
+    backgroundSecondary: '#F2E9E4',
+    backgroundTertiary: '#F8F3ED',
+    backgroundAccent: '#FCF8F3',
     
-    // Texto
-    text: '#111827',
-    textSecondary: '#6B7280',
-    textTertiary: '#9CA3AF',
+    // Texto (Tonos terrosos)
+    text: '#3C2A21',
+    textSecondary: '#6D4C41',
+    textTertiary: '#8D6E63',
     textInverted: '#FFFFFF',
+    textMuted: '#A1887F',
     
     // Bordes y separadores
-    border: '#E5E7EB',
-    borderSecondary: '#D1D5DB',
+    border: '#E6D6C7',
+    borderSecondary: '#D7C4B0',
+    borderLight: '#F0E6D6',
     
-    // Tabs
+    // Tabs (Usando colores peruanos)
     tabBarBackground: '#FFFFFF',
-    tabActiveBackground: '#2563EB',
+    tabActiveBackground: '#D87C7C',
     tabActiveColor: '#FFFFFF',
-    tabInactiveColor: '#6B7280',
-    tabBorder: '#E5E7EB',
+    tabInactiveColor: '#8D6E63',
+    tabBorder: '#E6D6C7',
     
-    // Cards
+    // Cards (Fondos suaves)
     cardBackground: '#FFFFFF',
-    cardBorder: '#F3F4F6',
-    cardShadow: 'rgba(0, 0, 0, 0.1)',
+    cardBorder: '#F2E9E4',
+    cardShadow: 'rgba(216, 124, 124, 0.15)',
+    cardAccent: '#FCF8F3',
     
     // Botones
-    buttonPrimary: '#2563EB',
+    buttonPrimary: '#D87C7C',
     buttonPrimaryText: '#FFFFFF',
-    buttonSecondary: '#F3F4F6',
-    buttonSecondaryText: '#374151',
-    buttonDanger: '#DC2626',
+    buttonSecondary: '#F2E9E4',
+    buttonSecondaryText: '#6D4C41',
+    buttonAccent: '#EAC36C',
+    buttonAccentText: '#5D4037',
+    buttonDanger: '#C5524A',
     buttonDangerText: '#FFFFFF',
     
-    // Estados
-    success: '#059669',
-    warning: '#D97706',
-    error: '#DC2626',
-    info: '#0284C7',
+    // Estados (Adaptados a la paleta)
+    success: '#8FBF90',
+    warning: '#EAC36C',
+    error: '#C5524A',
+    info: '#6D8CA0',
+    
+    // Colores adicionales peruanos
+    terracotta: '#D87C7C',
+    gold: '#EAC36C',
+    sage: '#8FBF90',
+    slate: '#6D8CA0',
+    lavender: '#A88BBE',
     
     // Otros
-    tint: '#2563EB',
-    tabIconDefault: '#9CA3AF',
-    tabIconSelected: '#2563EB',
+    tint: '#D87C7C',
+    tabIconDefault: '#8D6E63',
+    tabIconSelected: '#D87C7C',
   },
   dark: {
-    // Colores principales
-    primary: '#3B82F6',
-    primaryHover: '#2563EB',
-    primaryLight: '#1E293B',
+    // Colores principales (Versiones oscuras)
+    primary: '#A65D5D',
+    primaryHover: '#8B4A4A',
+    primaryLight: '#2B2B2B',
+    primaryAccent: '#B8923E',
     
-    // Colores de fondo
-    background: '#111827',
-    backgroundSecondary: '#1F2937',
-    backgroundTertiary: '#374151',
+    // Colores de fondo (Tonos oscuros)
+    background: '#1A1A1A',
+    backgroundSecondary: '#2B2B2B',
+    backgroundTertiary: '#363636',
+    backgroundAccent: '#424242',
     
-    // Texto
-    text: '#F9FAFB',
-    textSecondary: '#D1D5DB',
-    textTertiary: '#9CA3AF',
-    textInverted: '#111827',
+    // Texto (Tonos claros adaptados)
+    text: '#F5F5F5',
+    textSecondary: '#E0E0E0',
+    textTertiary: '#BDBDBD',
+    textInverted: '#1A1A1A',
+    textMuted: '#9E9E9E',
     
     // Bordes y separadores
-    border: '#374151',
-    borderSecondary: '#4B5563',
+    border: '#424242',
+    borderSecondary: '#525252',
+    borderLight: '#363636',
     
-    // Tabs
-    tabBarBackground: '#1F2937',
-    tabActiveBackground: '#3B82F6',
+    // Tabs (Versiones oscuras)
+    tabBarBackground: '#2B2B2B',
+    tabActiveBackground: '#A65D5D',
     tabActiveColor: '#FFFFFF',
-    tabInactiveColor: '#9CA3AF',
-    tabBorder: '#374151',
+    tabInactiveColor: '#BDBDBD',
+    tabBorder: '#424242',
     
-    // Cards
-    cardBackground: '#1F2937',
-    cardBorder: '#374151',
-    cardShadow: 'rgba(0, 0, 0, 0.3)',
+    // Cards (Fondos oscuros)
+    cardBackground: '#2B2B2B',
+    cardBorder: '#424242',
+    cardShadow: 'rgba(0, 0, 0, 0.4)',
+    cardAccent: '#363636',
     
     // Botones
-    buttonPrimary: '#3B82F6',
+    buttonPrimary: '#A65D5D',
     buttonPrimaryText: '#FFFFFF',
-    buttonSecondary: '#374151',
-    buttonSecondaryText: '#D1D5DB',
-    buttonDanger: '#EF4444',
+    buttonSecondary: '#424242',
+    buttonSecondaryText: '#E0E0E0',
+    buttonAccent: '#B8923E',
+    buttonAccentText: '#FFFFFF',
+    buttonDanger: '#B85450',
     buttonDangerText: '#FFFFFF',
     
-    // Estados
-    success: '#10B981',
-    warning: '#F59E0B',
-    error: '#EF4444',
-    info: '#06B6D4',
+    // Estados (Versiones oscuras)
+    success: '#5C8B5E',
+    warning: '#B8923E',
+    error: '#B85450',
+    info: '#4A6573',
+    
+    // Colores adicionales peruanos (versiones oscuras)
+    terracotta: '#A65D5D',
+    gold: '#B8923E',
+    sage: '#5C8B5E',
+    slate: '#4A6573',
+    lavender: '#7A6490',
     
     // Otros
-    tint: '#3B82F6',
-    tabIconDefault: '#9CA3AF',
-    tabIconSelected: '#3B82F6',
+    tint: '#A65D5D',
+    tabIconDefault: '#BDBDBD',
+    tabIconSelected: '#A65D5D',
   },
 };
 

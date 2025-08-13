@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { 
@@ -17,6 +18,7 @@ import {
   Play
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import Colors from '@/constants/Colors';
 
 interface SectionDetail {
   id: number;
@@ -32,6 +34,8 @@ export default function SectionDetailPage() {
   const { user } = useAuth();
   const [section, setSection] = useState<SectionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
   useEffect(() => {
     loadSection();
@@ -114,91 +118,96 @@ export default function SectionDetailPage() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-gray-500">Cargando sección...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }} className="justify-center items-center">
+        <Text style={{ color: colors.textTertiary }}>Cargando sección...</Text>
       </SafeAreaView>
     );
   }
 
   if (!section) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-gray-500">Sección no encontrada</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }} className="justify-center items-center">
+        <Text style={{ color: colors.textTertiary }}>Sección no encontrada</Text>
         <TouchableOpacity
           onPress={() => router.back()}
-          className="mt-4 px-6 py-2 bg-blue-600 rounded-lg"
+          style={{ backgroundColor: colors.buttonPrimary }}
+          className="mt-4 px-6 py-2 rounded-lg"
         >
-          <Text className="text-white font-semibold">Volver</Text>
+          <Text style={{ color: colors.buttonPrimaryText }} className="font-semibold">Volver</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
       <ScrollView className="flex-1">
         {/* Header */}
-        <View className="bg-white px-6 py-6 border-b border-gray-200">
+        <View style={{ backgroundColor: colors.background, borderBottomColor: colors.border }} className="px-6 py-6 border-b">
           <TouchableOpacity
             onPress={() => router.back()}
             className="flex-row items-center mb-4"
           >
-            <ChevronLeft size={24} color="#374151" />
-            <Text className="text-gray-700 ml-2 font-medium">Volver</Text>
+            <ChevronLeft size={24} color={colors.text} />
+            <Text style={{ color: colors.text }} className="ml-2 font-medium">Volver</Text>
           </TouchableOpacity>
 
-          <Text className="text-2xl font-bold text-gray-800 mb-3">
+          <Text style={{ color: colors.text }} className="text-2xl font-bold mb-3">
             {section.name}
           </Text>
           
           <View className="flex-row items-center mb-2">
-            <Calendar size={16} color="#6b7280" />
-            <Text className="text-gray-600 ml-2 capitalize">
+            <Calendar size={16} color={colors.textTertiary} />
+            <Text style={{ color: colors.textSecondary }} className="ml-2 capitalize">
               {formatDate(section.startsAt)}
             </Text>
           </View>
           
           <View className="flex-row items-center mb-2">
-            <Clock size={16} color="#6b7280" />
-            <Text className="text-gray-600 ml-2">
+            <Clock size={16} color={colors.textTertiary} />
+            <Text style={{ color: colors.textSecondary }} className="ml-2">
               {formatTime(section.startsAt)} - {formatTime(section.endsAt)}
             </Text>
           </View>
 
           <View className="flex-row items-center">
-            <Play size={16} color="#6b7280" />
-            <Text className="text-gray-600 ml-2">
+            <Play size={16} color={colors.textTertiary} />
+            <Text style={{ color: colors.textSecondary }} className="ml-2">
               Duración: {getDuration(section.startsAt, section.endsAt)}
             </Text>
           </View>
         </View>
 
         {/* Description */}
-        <View className="bg-white px-6 py-6 mt-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">
+        <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+          <Text style={{ color: colors.text }} className="text-lg font-semibold mb-3">
             Descripción
           </Text>
-          <Text className="text-gray-600 leading-6">
+          <Text style={{ color: colors.textSecondary }} className="leading-6">
             {section.description}
           </Text>
         </View>
 
         {/* Sessions */}
         {section.sessions.length > 0 && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">
+          <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+            <Text style={{ color: colors.text }} className="text-lg font-semibold mb-4">
               Sesiones ({section.sessions.length})
             </Text>
             
             {section.sessions.map((session, index) => (
               <TouchableOpacity
                 key={session.id}
-                className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100"
+                style={{ 
+                  backgroundColor: colors.cardAccent, 
+                  borderColor: colors.cardBorder 
+                }}
+                className="rounded-xl p-4 mb-4 border"
                 onPress={() => router.push(`/session/${session.id}`)}
               >
                 <View className="flex-row justify-between items-start mb-3">
                   <View className="flex-1 mr-3">
-                    <Text className="text-lg font-bold text-gray-800 mb-1">
+                    <Text style={{ color: colors.text }} className="text-lg font-bold mb-1">
                       {session.title}
                     </Text>
                     
@@ -211,24 +220,24 @@ export default function SectionDetailPage() {
                       </View>
                     )}
                     
-                    <Text className="text-gray-600 text-sm leading-5 mb-3">
+                    <Text style={{ color: colors.textSecondary }} className="text-sm leading-5 mb-3">
                       {session.description}
                     </Text>
                   </View>
-                  <ExternalLink size={20} color="#9ca3af" />
+                  <ExternalLink size={20} color={colors.textTertiary} />
                 </View>
                 
-                <View className="flex-row items-center justify-between pt-3 border-t border-gray-200">
+                <View style={{ borderTopColor: colors.border }} className="flex-row items-center justify-between pt-3 border-t">
                   <View className="flex-row items-center">
-                    <Clock size={14} color="#6b7280" />
-                    <Text className="text-gray-500 text-sm ml-1">
+                    <Clock size={14} color={colors.textTertiary} />
+                    <Text style={{ color: colors.textTertiary }} className="text-sm ml-1">
                       {formatTime(session.startsAt)} - {formatTime(session.endsAt)}
                     </Text>
                   </View>
                   
                   <View className="flex-row items-center">
-                    <Users size={14} color="#6b7280" />
-                    <Text className="text-gray-500 text-sm ml-1">
+                    <Users size={14} color={colors.textTertiary} />
+                    <Text style={{ color: colors.textTertiary }} className="text-sm ml-1">
                       {session.speakers.length} speaker{session.speakers.length > 1 ? 's' : ''}
                     </Text>
                   </View>
@@ -236,18 +245,22 @@ export default function SectionDetailPage() {
 
                 {/* Speakers */}
                 {session.speakers.length > 0 && (
-                  <View className="mt-3 pt-3 border-t border-gray-200">
-                    <Text className="text-gray-700 font-medium text-sm mb-2">
+                  <View style={{ borderTopColor: colors.border }} className="mt-3 pt-3 border-t">
+                    <Text style={{ color: colors.text }} className="font-medium text-sm mb-2">
                       Speakers:
                     </Text>
                     <View className="flex-row flex-wrap">
                       {session.speakers.map((speaker: any, speakerIndex: number) => (
                         <TouchableOpacity
                           key={speaker.id}
-                          className="bg-white px-3 py-1 rounded-full mr-2 mb-2 border border-gray-200"
+                          style={{ 
+                            backgroundColor: colors.background, 
+                            borderColor: colors.border 
+                          }}
+                          className="px-3 py-1 rounded-full mr-2 mb-2 border"
                           onPress={() => router.push(`/speaker/${speaker.id}`)}
                         >
-                          <Text className="text-gray-700 text-xs">
+                          <Text style={{ color: colors.text }} className="text-xs">
                             {speaker.name}
                           </Text>
                         </TouchableOpacity>
@@ -264,11 +277,12 @@ export default function SectionDetailPage() {
         <View className="px-6 py-6 mt-4">
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/sections')}
-            className="bg-gray-100 py-4 px-6 rounded-lg"
+            style={{ backgroundColor: colors.buttonSecondary }}
+            className="py-4 px-6 rounded-lg"
           >
             <View className="flex-row items-center justify-center">
-              <Calendar size={20} color="#374151" />
-              <Text className="text-gray-700 font-semibold ml-2">
+              <Calendar size={20} color={colors.buttonSecondaryText} />
+              <Text style={{ color: colors.buttonSecondaryText }} className="font-semibold ml-2">
                 Ver todas las secciones
               </Text>
             </View>

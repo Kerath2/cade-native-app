@@ -5,13 +5,17 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { router } from 'expo-router';
-import { User, LogOut, Star } from 'lucide-react-native';
+import { User, LogOut, Star, Settings, Info, Shield, HelpCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import Colors from '@/constants/Colors';
 
 export default function MorePage() {
   const { logout } = useAuth();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
   const handleLogout = () => {
     Alert.alert(
@@ -34,7 +38,7 @@ export default function MorePage() {
   const menuItems = [
     {
       icon: User,
-      title: 'Perfil',
+      title: 'Mi Perfil',
       subtitle: 'Ver y editar información personal',
       onPress: () => {
         Alert.alert('Próximamente', 'Esta función estará disponible pronto');
@@ -42,8 +46,40 @@ export default function MorePage() {
     },
     {
       icon: Star,
-      title: 'Favoritos',
-      subtitle: 'Sesiones marcadas como favoritas',
+      title: 'Mis Favoritos',
+      subtitle: 'Sesiones y speakers marcados como favoritos',
+      onPress: () => {
+        Alert.alert('Próximamente', 'Esta función estará disponible pronto');
+      },
+    },
+    {
+      icon: Settings,
+      title: 'Configuración',
+      subtitle: 'Preferencias y ajustes de la aplicación',
+      onPress: () => {
+        Alert.alert('Próximamente', 'Esta función estará disponible pronto');
+      },
+    },
+    {
+      icon: HelpCircle,
+      title: 'Ayuda y Soporte',
+      subtitle: 'Preguntas frecuentes y contacto',
+      onPress: () => {
+        Alert.alert('Próximamente', 'Esta función estará disponible pronto');
+      },
+    },
+    {
+      icon: Info,
+      title: 'Acerca de CADE',
+      subtitle: 'Información sobre el evento',
+      onPress: () => {
+        Alert.alert('CADE 2025', 'Conferencia Anual de Ejecutivos\nLima, Perú');
+      },
+    },
+    {
+      icon: Shield,
+      title: 'Privacidad',
+      subtitle: 'Términos y política de privacidad',
       onPress: () => {
         Alert.alert('Próximamente', 'Esta función estará disponible pronto');
       },
@@ -58,42 +94,66 @@ export default function MorePage() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
       <View className="px-6 py-6">
-        <Text className="text-2xl font-bold text-gray-800 mb-6">
+        <Text style={{ color: colors.text }} className="text-2xl font-bold mb-2">
           Más opciones
         </Text>
+        <Text style={{ color: colors.textSecondary }} className="text-sm mb-6">
+          Configura tu perfil y preferencias de la aplicación
+        </Text>
         
-        <View className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+        <View style={{ backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }} className="rounded-xl overflow-hidden shadow-sm border">
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
+              style={{ 
+                borderBottomColor: index !== menuItems.length - 1 ? colors.border : 'transparent'
+              }}
               className={`p-4 flex-row items-center ${
-                index !== menuItems.length - 1 ? 'border-b border-gray-100' : ''
+                index !== menuItems.length - 1 ? 'border-b' : ''
               }`}
               onPress={item.onPress}
             >
-              <View className={`w-10 h-10 rounded-full items-center justify-center mr-4 ${
-                item.isDestructive ? 'bg-red-100' : 'bg-gray-100'
-              }`}>
+              <View 
+                style={{ 
+                  backgroundColor: item.isDestructive 
+                    ? colors.error + '20' 
+                    : colors.primaryLight 
+                }}
+                className="w-12 h-12 rounded-full items-center justify-center mr-4"
+              >
                 <item.icon 
-                  size={20} 
-                  color={item.isDestructive ? '#dc2626' : '#6b7280'} 
+                  size={22} 
+                  color={item.isDestructive ? colors.error : colors.primary} 
                 />
               </View>
               
               <View className="flex-1">
-                <Text className={`font-semibold mb-1 ${
-                  item.isDestructive ? 'text-red-600' : 'text-gray-800'
-                }`}>
+                <Text 
+                  style={{ 
+                    color: item.isDestructive ? colors.error : colors.text 
+                  }}
+                  className="font-semibold mb-1"
+                >
                   {item.title}
                 </Text>
-                <Text className="text-gray-500 text-sm">
+                <Text style={{ color: colors.textSecondary }} className="text-sm leading-5">
                   {item.subtitle}
                 </Text>
               </View>
             </TouchableOpacity>
           ))}
+        </View>
+        
+        {/* Footer info */}
+        <View className="mt-8 items-center">
+          <Text style={{ color: colors.textTertiary }} className="text-xs text-center">
+            CADE App v1.0.0
+          </Text>
+          <Text style={{ color: colors.textTertiary }} className="text-xs text-center mt-1">
+            Desarrollado para CADE 2025
+          </Text>
         </View>
       </View>
     </SafeAreaView>

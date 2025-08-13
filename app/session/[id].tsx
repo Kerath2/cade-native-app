@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Image,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { 
@@ -20,6 +21,7 @@ import {
   Share
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import Colors from '@/constants/Colors';
 
 interface SessionDetail {
   id: number;
@@ -45,6 +47,8 @@ export default function SessionDetailPage() {
   const { user } = useAuth();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
   useEffect(() => {
     loadSession();
@@ -147,31 +151,32 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-gray-500">Cargando sesión...</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }} className="justify-center items-center">
+        <Text style={{ color: colors.textTertiary }}>Cargando sesión...</Text>
       </SafeAreaView>
     );
   }
 
   if (!session) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-gray-500">Sesión no encontrada</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }} className="justify-center items-center">
+        <Text style={{ color: colors.textTertiary }}>Sesión no encontrada</Text>
         <TouchableOpacity
           onPress={() => router.back()}
-          className="mt-4 px-6 py-2 bg-blue-600 rounded-lg"
+          style={{ backgroundColor: colors.buttonPrimary }}
+          className="mt-4 px-6 py-2 rounded-lg"
         >
-          <Text className="text-white font-semibold">Volver</Text>
+          <Text style={{ color: colors.buttonPrimaryText }} className="font-semibold">Volver</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
       <ScrollView className="flex-1">
         {/* Header */}
-        <View className="bg-white px-6 py-6 border-b border-gray-200">
+        <View style={{ backgroundColor: colors.background, borderBottomColor: colors.border }} className="px-6 py-6 border-b">
           {session.isLive && (
             <View className="flex-row items-center mb-3">
               <View className="w-3 h-3 bg-red-500 rounded-full mr-2" />
@@ -181,20 +186,20 @@ export default function SessionDetailPage() {
             </View>
           )}
           
-          <Text className="text-2xl font-bold text-gray-800 mb-3">
+          <Text style={{ color: colors.text }} className="text-2xl font-bold mb-3">
             {session.title}
           </Text>
           
           <View className="flex-row items-center mb-2">
-            <Calendar size={16} color="#6b7280" />
-            <Text className="text-gray-600 ml-2 capitalize">
+            <Calendar size={16} color={colors.textTertiary} />
+            <Text style={{ color: colors.textSecondary }} className="ml-2 capitalize">
               {formatDate(session.startsAt)}
             </Text>
           </View>
           
           <View className="flex-row items-center mb-4">
-            <Clock size={16} color="#6b7280" />
-            <Text className="text-gray-600 ml-2">
+            <Clock size={16} color={colors.textTertiary} />
+            <Text style={{ color: colors.textSecondary }} className="ml-2">
               {formatTime(session.startsAt)} - {formatTime(session.endsAt)}
             </Text>
           </View>
@@ -203,58 +208,61 @@ export default function SessionDetailPage() {
           <View className="flex-row justify-between">
             <TouchableOpacity
               onPress={toggleFavorite}
-              className="flex-row items-center px-4 py-2 bg-gray-100 rounded-lg"
+              style={{ backgroundColor: colors.backgroundTertiary }}
+              className="flex-row items-center px-4 py-2 rounded-lg"
             >
               <Heart
                 size={18}
-                color={session.isFavorited ? '#ef4444' : '#6b7280'}
+                color={session.isFavorited ? '#ef4444' : colors.textSecondary}
                 fill={session.isFavorited ? '#ef4444' : 'transparent'}
               />
-              <Text className="ml-2 text-gray-700 font-medium">
+              <Text style={{ color: colors.text }} className="ml-2 font-medium">
                 {session.isFavorited ? 'Favorito' : 'Favorito'}
               </Text>
             </TouchableOpacity>
             
             <TouchableOpacity
               onPress={shareSession}
-              className="flex-row items-center px-4 py-2 bg-gray-100 rounded-lg"
+              style={{ backgroundColor: colors.backgroundTertiary }}
+              className="flex-row items-center px-4 py-2 rounded-lg"
             >
-              <Share size={18} color="#6b7280" />
-              <Text className="ml-2 text-gray-700 font-medium">Compartir</Text>
+              <Share size={18} color={colors.textSecondary} />
+              <Text style={{ color: colors.text }} className="ml-2 font-medium">Compartir</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Description */}
-        <View className="bg-white px-6 py-6 mt-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">
+        <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+          <Text style={{ color: colors.text }} className="text-lg font-semibold mb-3">
             Descripción
           </Text>
-          <Text className="text-gray-600 leading-6">
+          <Text style={{ color: colors.textSecondary }} className="leading-6">
             {session.description}
           </Text>
         </View>
 
         {/* Speakers */}
         {session.speakers.length > 0 && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">
+          <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+            <Text style={{ color: colors.text }} className="text-lg font-semibold mb-4">
               Speakers
             </Text>
             {session.speakers.map((speaker, index) => (
               <TouchableOpacity
                 key={speaker.id}
-                className="flex-row items-center py-3 border-b border-gray-100 last:border-b-0"
+                style={{ borderBottomColor: colors.border }}
+                className="flex-row items-center py-3 border-b last:border-b-0"
                 onPress={() => router.push(`/speaker/${speaker.id}`)}
               >
-                <View className="w-12 h-12 bg-gray-200 rounded-full items-center justify-center mr-4">
-                  <Users size={20} color="#6b7280" />
+                <View style={{ backgroundColor: colors.backgroundTertiary }} className="w-12 h-12 rounded-full items-center justify-center mr-4">
+                  <Users size={20} color={colors.primary} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-800 font-semibold">
+                  <Text style={{ color: colors.text }} className="font-semibold">
                     {speaker.name}
                   </Text>
-                  <Text className="text-gray-600 text-sm">
+                  <Text style={{ color: colors.textSecondary }} className="text-sm">
                     {speaker.position} - {speaker.company}
                   </Text>
                 </View>
@@ -265,23 +273,24 @@ export default function SessionDetailPage() {
 
         {/* Documents */}
         {session.documents && session.documents.length > 0 && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">
+          <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+            <Text style={{ color: colors.text }} className="text-lg font-semibold mb-4">
               Documentos
             </Text>
             {session.documents.map((doc, index) => (
               <TouchableOpacity
                 key={doc.id}
-                className="flex-row items-center py-3 border-b border-gray-100 last:border-b-0"
+                style={{ borderBottomColor: colors.border }}
+                className="flex-row items-center py-3 border-b last:border-b-0"
               >
-                <View className="w-12 h-12 bg-blue-100 rounded-lg items-center justify-center mr-4">
-                  <FileText size={20} color="#2563eb" />
+                <View style={{ backgroundColor: colors.primaryLight }} className="w-12 h-12 rounded-lg items-center justify-center mr-4">
+                  <FileText size={20} color={colors.primary} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-800 font-semibold">
+                  <Text style={{ color: colors.text }} className="font-semibold">
                     {doc.name}
                   </Text>
-                  <Text className="text-gray-600 text-sm">
+                  <Text style={{ color: colors.textSecondary }} className="text-sm">
                     {doc.type} • {doc.size}
                   </Text>
                 </View>
@@ -292,11 +301,11 @@ export default function SessionDetailPage() {
 
         {/* Summary */}
         {session.summary && (
-          <View className="bg-white px-6 py-6 mt-4">
-            <Text className="text-lg font-semibold text-gray-800 mb-3">
+          <View style={{ backgroundColor: colors.background }} className="px-6 py-6 mt-4">
+            <Text style={{ color: colors.text }} className="text-lg font-semibold mb-3">
               Resumen
             </Text>
-            <Text className="text-gray-600 leading-6">
+            <Text style={{ color: colors.textSecondary }} className="leading-6">
               {session.summary}
             </Text>
           </View>
@@ -305,10 +314,10 @@ export default function SessionDetailPage() {
         {/* Actions */}
         <View className="px-6 py-6 mt-4">
           {session.hasQuestions && (
-            <TouchableOpacity className="bg-blue-600 py-4 px-6 rounded-lg mb-3">
+            <TouchableOpacity style={{ backgroundColor: colors.buttonPrimary }} className="py-4 px-6 rounded-lg mb-3">
               <View className="flex-row items-center justify-center">
-                <MessageCircle size={20} color="white" />
-                <Text className="text-white font-semibold ml-2">
+                <MessageCircle size={20} color={colors.buttonPrimaryText} />
+                <Text style={{ color: colors.buttonPrimaryText }} className="font-semibold ml-2">
                   Hacer una pregunta
                 </Text>
               </View>
@@ -317,11 +326,12 @@ export default function SessionDetailPage() {
           
           <TouchableOpacity
             onPress={() => router.push(`/section/${session.section.id}`)}
-            className="bg-gray-100 py-4 px-6 rounded-lg"
+            style={{ backgroundColor: colors.buttonSecondary }}
+            className="py-4 px-6 rounded-lg"
           >
             <View className="flex-row items-center justify-center">
-              <Calendar size={20} color="#374151" />
-              <Text className="text-gray-700 font-semibold ml-2">
+              <Calendar size={20} color={colors.buttonSecondaryText} />
+              <Text style={{ color: colors.buttonSecondaryText }} className="font-semibold ml-2">
                 Ver más de {session.section.name}
               </Text>
             </View>
