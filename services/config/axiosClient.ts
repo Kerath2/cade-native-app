@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '@/utils/storage';
 
 // Create axios instance
 const axiosClient = axios.create({
@@ -13,7 +13,7 @@ const axiosClient = axios.create({
 // Request interceptor to add auth token
 axiosClient.interceptors.request.use(
   async (config: any) => {
-    const token = await SecureStore.getItemAsync('accessToken');
+    const token = await storage.getItemAsync('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -36,7 +36,7 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await SecureStore.getItemAsync('refreshToken');
+        const refreshToken = await storage.getItemAsync('refreshToken');
         
         if (refreshToken) {
           const response = await axios.post(
@@ -45,7 +45,7 @@ axiosClient.interceptors.response.use(
           );
 
           const { accessToken } = response.data;
-          await SecureStore.setItemAsync('accessToken', accessToken);
+          await storage.setItemAsync('accessToken', accessToken);
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -53,8 +53,8 @@ axiosClient.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, redirect to login
-        await SecureStore.deleteItemAsync('accessToken');
-        await SecureStore.deleteItemAsync('refreshToken');
+        await storage.deleteItemAsync('accessToken');
+        await storage.deleteItemAsync('refreshToken');
         
         // You can add navigation logic here if needed
         console.log('Token refresh failed, user needs to login again');

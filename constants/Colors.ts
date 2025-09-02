@@ -1,136 +1,136 @@
-// Sistema de colores inspirado en la paleta peruana
+// Sistema de colores IPAE
 const Colors = {
   light: {
-    // Colores principales (Rojo peruano y dorado)
-    primary: '#D87C7C',
-    primaryHover: '#A65D5D',
-    primaryLight: '#F2E9E4',
-    primaryAccent: '#EAC36C',
+    // Colores principales IPAE (45,60,150) y (240,60,70)
+    primary: 'rgb(45,60,150)',
+    primaryHover: 'rgb(35,45,120)',
+    primaryLight: 'rgb(232,232,229)',
+    primaryAccent: 'rgb(240,60,70)',
     
-    // Colores de fondo (Tonos cálidos y neutros)
+    // Colores de fondo IPAE
     background: '#FFFFFF',
-    backgroundSecondary: '#F2E9E4',
-    backgroundTertiary: '#F8F3ED',
-    backgroundAccent: '#FCF8F3',
+    backgroundSecondary: 'rgb(232,232,229)',
+    backgroundTertiary: 'rgb(240,245,250)',
+    backgroundAccent: 'rgb(248,248,248)',
     
-    // Texto (Tonos terrosos)
-    text: '#3C2A21',
-    textSecondary: '#6D4C41',
-    textTertiary: '#8D6E63',
+    // Texto IPAE
+    text: 'rgb(111,111,110)',
+    textSecondary: 'rgb(80,80,80)',
+    textTertiary: 'rgb(135,135,135)',
     textInverted: '#FFFFFF',
-    textMuted: '#A1887F',
+    textMuted: 'rgb(150,150,150)',
     
     // Bordes y separadores
-    border: '#E6D6C7',
-    borderSecondary: '#D7C4B0',
-    borderLight: '#F0E6D6',
+    border: 'rgb(232,232,229)',
+    borderSecondary: 'rgb(200,200,200)',
+    borderLight: 'rgb(245,245,245)',
     
-    // Tabs (Usando colores peruanos)
+    // Tabs IPAE
     tabBarBackground: '#FFFFFF',
-    tabActiveBackground: '#D87C7C',
+    tabActiveBackground: 'rgb(240,60,70)',
     tabActiveColor: '#FFFFFF',
-    tabInactiveColor: '#8D6E63',
-    tabBorder: '#E6D6C7',
+    tabInactiveColor: 'rgb(111,111,110)',
+    tabBorder: 'rgb(232,232,229)',
     
-    // Cards (Fondos suaves)
+    // Cards IPAE
     cardBackground: '#FFFFFF',
-    cardBorder: '#F2E9E4',
-    cardShadow: 'rgba(216, 124, 124, 0.15)',
-    cardAccent: '#FCF8F3',
+    cardBorder: 'rgb(232,232,229)',
+    cardShadow: 'rgba(45, 60, 150, 0.15)',
+    cardAccent: 'rgb(248,248,248)',
     
-    // Botones
-    buttonPrimary: '#D87C7C',
+    // Botones IPAE
+    buttonPrimary: 'rgb(45,60,150)',
     buttonPrimaryText: '#FFFFFF',
-    buttonSecondary: '#F2E9E4',
-    buttonSecondaryText: '#6D4C41',
-    buttonAccent: '#EAC36C',
-    buttonAccentText: '#5D4037',
-    buttonDanger: '#C5524A',
+    buttonSecondary: 'rgb(232,232,229)',
+    buttonSecondaryText: 'rgb(111,111,110)',
+    buttonAccent: 'rgb(0,173,238)',
+    buttonAccentText: '#FFFFFF',
+    buttonDanger: 'rgb(240,60,70)',
     buttonDangerText: '#FFFFFF',
     
-    // Estados (Adaptados a la paleta)
-    success: '#8FBF90',
-    warning: '#EAC36C',
-    error: '#C5524A',
-    info: '#6D8CA0',
+    // Estados IPAE
+    success: 'rgb(76,175,80)',
+    warning: 'rgb(255,193,7)',
+    error: 'rgb(240,60,70)',
+    info: 'rgb(0,173,238)',
     
-    // Colores adicionales peruanos
-    terracotta: '#D87C7C',
-    gold: '#EAC36C',
-    sage: '#8FBF90',
-    slate: '#6D8CA0',
-    lavender: '#A88BBE',
+    // Colores IPAE específicos
+    brandPrimary: 'rgb(45,60,150)',
+    brandSecondary: 'rgb(240,60,70)',
+    brandNeutral: 'rgb(111,111,110)',
+    brandAccent: 'rgb(0,173,238)',
+    brandLight: 'rgb(232,232,229)',
     
     // Otros
-    tint: '#D87C7C',
-    tabIconDefault: '#8D6E63',
-    tabIconSelected: '#D87C7C',
+    tint: 'rgb(240,60,70)',
+    tabIconDefault: 'rgb(111,111,110)',
+    tabIconSelected: 'rgb(240,60,70)',
   },
   dark: {
-    // Colores principales (Versiones oscuras)
-    primary: '#A65D5D',
-    primaryHover: '#8B4A4A',
+    // Colores principales IPAE (versiones oscuras)
+    primary: 'rgb(65,85,180)',
+    primaryHover: 'rgb(55,75,160)',
     primaryLight: '#2B2B2B',
-    primaryAccent: '#B8923E',
+    primaryAccent: 'rgb(255,80,90)',
     
-    // Colores de fondo (Tonos oscuros)
+    // Colores de fondo IPAE (tonos oscuros)
     background: '#1A1A1A',
     backgroundSecondary: '#2B2B2B',
     backgroundTertiary: '#363636',
     backgroundAccent: '#424242',
     
-    // Texto (Tonos claros adaptados)
-    text: '#F5F5F5',
-    textSecondary: '#E0E0E0',
-    textTertiary: '#BDBDBD',
+    // Texto IPAE (versiones claras)
+    text: '#FFFFFF',
+    textSecondary: '#F0F0F0',
+    textTertiary: '#E0E0E0',
     textInverted: '#1A1A1A',
-    textMuted: '#9E9E9E',
+    textMuted: '#CCCCCC',
     
     // Bordes y separadores
     border: '#424242',
     borderSecondary: '#525252',
     borderLight: '#363636',
     
-    // Tabs (Versiones oscuras)
+    // Tabs IPAE (versiones oscuras)
     tabBarBackground: '#2B2B2B',
-    tabActiveBackground: '#A65D5D',
+    tabActiveBackground: 'rgb(255,80,90)',
     tabActiveColor: '#FFFFFF',
-    tabInactiveColor: '#BDBDBD',
+    tabInactiveColor: '#FFFFFF',
     tabBorder: '#424242',
     
-    // Cards (Fondos oscuros)
+    // Cards IPAE (fondos oscuros)
     cardBackground: '#2B2B2B',
     cardBorder: '#424242',
     cardShadow: 'rgba(0, 0, 0, 0.4)',
     cardAccent: '#363636',
     
-    // Botones
-    buttonPrimary: '#A65D5D',
+    // Botones IPAE (versiones oscuras)
+    buttonPrimary: 'rgb(65,85,180)',
     buttonPrimaryText: '#FFFFFF',
     buttonSecondary: '#424242',
     buttonSecondaryText: '#E0E0E0',
-    buttonAccent: '#B8923E',
+    buttonAccent: 'rgb(20,193,255)',
     buttonAccentText: '#FFFFFF',
-    buttonDanger: '#B85450',
+    buttonDanger: 'rgb(255,80,90)',
     buttonDangerText: '#FFFFFF',
     
-    // Estados (Versiones oscuras)
-    success: '#5C8B5E',
-    warning: '#B8923E',
-    error: '#B85450',
-    info: '#4A6573',
+    // Estados IPAE (versiones oscuras)
+    success: 'rgb(96,195,100)',
+    warning: 'rgb(255,213,27)',
+    error: 'rgb(255,80,90)',
+    info: 'rgb(20,193,255)',
     
-    // Colores adicionales peruanos (versiones oscuras)
-    terracotta: '#A65D5D',
-    gold: '#B8923E',
-    sage: '#5C8B5E',
-    slate: '#4A6573',
-    lavender: '#7A6490',
+    // Colores IPAE específicos (versiones oscuras)
+    brandPrimary: 'rgb(65,85,180)',
+    brandSecondary: 'rgb(255,80,90)',
+    brandNeutral: 'rgb(150,150,150)',
+    brandAccent: 'rgb(20,193,255)',
+    brandLight: '#424242',
     
     // Otros
-    tint: '#A65D5D',
-    tabIconDefault: '#BDBDBD',
-    tabIconSelected: '#A65D5D',
+    tint: 'rgb(255,80,90)',
+    tabIconDefault: '#FFFFFF',
+    tabIconSelected: 'rgb(255,80,90)',
   },
 };
 

@@ -5,11 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  StatusBar,
   RefreshControl,
   TextInput,
   Alert,
   useColorScheme,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Search, Calendar, Clock, ChevronRight } from 'lucide-react-native';
 import { sectionsApi } from '@/services/api';
@@ -25,6 +27,22 @@ export default function SectionsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const getCardGradient = () => {
+    if (colorScheme === "dark") {
+      return [colors.primary, colors.brandSecondary];
+    } else {
+      return [colors.primary, colors.primaryAccent];
+    }
+  };
+
+  const getBackgroundGradient = () => {
+    if (colorScheme === "dark") {
+      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
+    } else {
+      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
+    }
+  };
 
   useEffect(() => {
     loadSections();
@@ -102,49 +120,69 @@ export default function SectionsPage() {
   const renderSectionCard = (section: Section) => (
     <TouchableOpacity
       key={section.id}
-      style={{ 
-        backgroundColor: colors.cardBackground, 
-        borderColor: colors.cardBorder,
-        shadowColor: colors.cardShadow 
-      }}
-      className="rounded-xl p-4 mb-4 shadow-sm border"
+      className="rounded-xl mb-4 shadow-sm"
       onPress={() => router.push(`/section/${section.id}`)}
     >
+      <LinearGradient
+        colors={getCardGradient()}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          flex: 1,
+          borderRadius: 12,
+          padding: 16,
+          borderWidth: 1,
+          borderColor: colors.cardBorder,
+        }}
+      >
       <View className="flex-row justify-between items-start mb-3">
         <View className="flex-1 mr-3">
-          <Text style={{ color: colors.text }} className="text-lg font-bold mb-1">
+          <Text style={{ color: "#FFFFFF" }} className="text-lg font-bold mb-1">
             {section.title}
           </Text>
           {section.description && (
-            <Text style={{ color: colors.textSecondary }} className="text-sm leading-5">
+            <Text style={{ color: "#F0F0F0" }} className="text-sm leading-5">
               {section.description}
             </Text>
           )}
         </View>
-        <ChevronRight size={20} color={colors.textTertiary} />
+        <ChevronRight size={20} color="#E0E0E0" />
       </View>
       
-      <View style={{ borderTopColor: colors.border }} className="flex-row items-center justify-between pt-3 border-t">
+      <View style={{ borderTopColor: "rgba(255,255,255,0.2)" }} className="flex-row items-center justify-between pt-3 border-t">
         <View className="flex-row items-center">
-          <Clock size={14} color={colors.textTertiary} />
-          <Text style={{ color: colors.textTertiary }} className="text-sm ml-1">
+          <Clock size={14} color="#E0E0E0" />
+          <Text style={{ color: "#E0E0E0" }} className="text-sm ml-1">
             {formatTime(section.startsAt)} - {formatTime(section.endsAt)}
           </Text>
         </View>
         
         <View className="flex-row items-center">
-          <Calendar size={14} color={colors.textTertiary} />
-          <Text style={{ color: colors.textTertiary }} className="text-sm ml-1">
+          <Calendar size={14} color="#E0E0E0" />
+          <Text style={{ color: "#E0E0E0" }} className="text-sm ml-1">
             {section.sessions.length} sesión{section.sessions.length > 1 ? 'es' : ''}
           </Text>
         </View>
       </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
-      <View style={{ backgroundColor: colors.background, borderBottomColor: colors.border }} className="px-6 py-4 border-b">
+    <LinearGradient
+      colors={getBackgroundGradient()}
+      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
+      style={{ flex: 1 }}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar 
+          barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} 
+          backgroundColor="transparent"
+          translucent={true}
+        />
+        <View style={{ backgroundColor: "transparent", borderBottomColor: "rgba(255,255,255,0.1)" }} className="px-6 py-4 border-b">
         <View style={{ backgroundColor: colors.backgroundTertiary }} className="flex-row items-center rounded-lg px-3 py-2">
           <Search size={20} color={colors.textTertiary} />
           <TextInput
@@ -160,9 +198,16 @@ export default function SectionsPage() {
       </View>
 
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
+        contentContainerStyle={{ backgroundColor: 'transparent' }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+            backgroundColor="transparent"
+          />
         }
       >
         <View className="px-6 py-6">
@@ -189,6 +234,7 @@ export default function SectionsPage() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }

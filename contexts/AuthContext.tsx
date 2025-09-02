@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '@/utils/storage';
 import { authApi } from '@/services/api/auth';
 import { User } from '@/types/user';
 
@@ -38,12 +38,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthState = async () => {
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      const refreshTokenValue = await SecureStore.getItemAsync('refreshToken');
+      const token = await storage.getItemAsync('accessToken');
+      const refreshTokenValue = await storage.getItemAsync('refreshToken');
       
       if (token && refreshTokenValue) {
-        // Try to refresh token to validate it's still valid
-        await refreshToken();
+        // Get user data from storage to avoid refresh on every check
+        const userData = await storage.getItemAsync('userData');
+        if (userData) {
+          setUser(JSON.parse(userData));
+        } else {
+          // Only refresh token if we don't have user data
+          await refreshToken();
+        }
       }
     } catch (error) {
       console.log('Auth check failed:', error);
@@ -57,9 +63,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.login({ email, password });
       
-      // Store tokens securely
-      await SecureStore.setItemAsync('accessToken', response.accessToken);
-      await SecureStore.setItemAsync('refreshToken', response.refreshToken);
+      // Store tokens and user data securely
+      await storage.setItemAsync('accessToken', response.accessToken);
+      await storage.setItemAsync('refreshToken', response.refreshToken);
+      await storage.setItemAsync('userData', JSON.stringify(response.user));
       
       setUser(response.user);
     } catch (error: any) {
@@ -69,9 +76,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Clear tokens
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('refreshToken');
+      // Clear tokens and user data
+      await storage.deleteItemAsync('accessToken');
+      await storage.deleteItemAsync('refreshToken');
+      await storage.deleteItemAsync('userData');
       
       setUser(null);
     } catch (error) {
@@ -81,7 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      const refreshTokenValue = await SecureStore.getItemAsync('refreshToken');
+      const refreshTokenValue = await storage.getItemAsync('refreshToken');
       
       if (!refreshTokenValue) {
         throw new Error('No refresh token available');
@@ -89,8 +97,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const response = await authApi.refresh({ refreshToken: refreshTokenValue });
       
-      // Update access token
-      await SecureStore.setItemAsync('accessToken', response.accessToken);
+      // Update access token and user data
+      await storage.setItemAsync('accessToken', response.accessToken);
+      await storage.setItemAsync('userData', JSON.stringify(response.user));
       
       setUser(response.user);
     } catch (error: any) {

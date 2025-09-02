@@ -4,9 +4,11 @@ import {
   Text,
   TouchableOpacity,
   SafeAreaView,
+  StatusBar,
   Alert,
   useColorScheme,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { User, LogOut, Star, Settings, Info, Shield, HelpCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +18,22 @@ export default function MorePage() {
   const { logout } = useAuth();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const getCardGradient = () => {
+    if (colorScheme === "dark") {
+      return [colors.primary, colors.brandSecondary];
+    } else {
+      return [colors.primary, colors.primaryAccent];
+    }
+  };
+
+  const getBackgroundGradient = () => {
+    if (colorScheme === "dark") {
+      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
+    } else {
+      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -94,7 +112,19 @@ export default function MorePage() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
+    <LinearGradient
+      colors={getBackgroundGradient()}
+      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
+      style={{ flex: 1 }}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar 
+          barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} 
+          backgroundColor="transparent"
+          translucent={true}
+        />
       <View className="px-6 py-6">
         <Text style={{ color: colors.text }} className="text-2xl font-bold mb-2">
           Más opciones
@@ -103,7 +133,16 @@ export default function MorePage() {
           Configura tu perfil y preferencias de la aplicación
         </Text>
         
-        <View style={{ backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }} className="rounded-xl overflow-hidden shadow-sm border">
+        <View
+          style={{
+            backgroundColor: colors.background,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: colors.cardBorder,
+            overflow: 'hidden',
+          }}
+          className="shadow-sm"
+        >
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
@@ -132,7 +171,7 @@ export default function MorePage() {
               <View className="flex-1">
                 <Text 
                   style={{ 
-                    color: item.isDestructive ? colors.error : colors.text 
+                    color: item.isDestructive ? colors.error : colors.text
                   }}
                   className="font-semibold mb-1"
                 >
@@ -156,6 +195,7 @@ export default function MorePage() {
           </Text>
         </View>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }

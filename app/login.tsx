@@ -11,10 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  useColorScheme,
 } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff } from "lucide-react-native";
+import Colors from "@/constants/Colors";
 import Logo from "../assets/images/logoLogin.png";
 import LogoFooter from "../assets/images/logoFooter.png";
 
@@ -24,6 +27,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const getBackgroundGradient = () => {
+    if (colorScheme === "dark") {
+      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
+    } else {
+      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -43,12 +56,23 @@ export default function LoginPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
+    <LinearGradient
+      colors={getBackgroundGradient()}
+      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
+      style={{ flex: 1 }}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar 
+          barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} 
+          backgroundColor="transparent"
+          translucent={true}
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
@@ -60,18 +84,24 @@ export default function LoginPage() {
           <View className="flex-1 px-6 pt-8">
             {/* Login Form */}
             <View className="w-full">
-              <Text className="text-2xl font-bold text-gray-800 mb-6 text-center">
+              <Text style={{ color: colors.text }} className="text-2xl font-bold mb-6 text-center">
                 Iniciar Sesión
               </Text>
 
               {/* Email Input */}
               <View className="mb-4">
-                <Text className="text-gray-700 mb-2 font-medium">
+                <Text style={{ color: colors.text }} className="mb-2 font-medium">
                   Correo electrónico
                 </Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 bg-gray-50"
+                  style={{ 
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    color: colors.text
+                  }}
+                  className="border rounded-lg px-4 py-3"
                   placeholder="Ingrese su correo"
+                  placeholderTextColor={colors.textTertiary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -82,13 +112,19 @@ export default function LoginPage() {
 
               {/* Password Input */}
               <View className="mb-6">
-                <Text className="text-gray-700 mb-2 font-medium">
+                <Text style={{ color: colors.text }} className="mb-2 font-medium">
                   Contraseña
                 </Text>
                 <View className="relative">
                   <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 text-gray-800 bg-gray-50 pr-12"
+                    style={{ 
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.text
+                    }}
+                    className="border rounded-lg px-4 py-3 pr-12"
                     placeholder="Ingrese su contraseña"
+                    placeholderTextColor={colors.textTertiary}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -100,9 +136,9 @@ export default function LoginPage() {
                     onPress={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff size={20} color="#666" />
+                      <EyeOff size={20} color={colors.textTertiary} />
                     ) : (
-                      <Eye size={20} color="#666" />
+                      <Eye size={20} color={colors.textTertiary} />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -110,13 +146,14 @@ export default function LoginPage() {
 
               {/* Login Button */}
               <TouchableOpacity
-                className={`py-3 px-6 rounded-lg mb-4 ${
-                  loading ? "bg-gray-400" : "bg-black"
-                }`}
+                style={{
+                  backgroundColor: loading ? colors.backgroundTertiary : colors.primary
+                }}
+                className="py-3 px-6 rounded-lg mb-4"
                 onPress={handleLogin}
                 disabled={loading}
               >
-                <Text className="text-white text-center font-semibold text-lg">
+                <Text style={{ color: colors.textInverted }} className="text-center font-semibold text-lg">
                   {loading ? "Iniciando..." : "Iniciar Sesión"}
                 </Text>
               </TouchableOpacity>
@@ -126,7 +163,7 @@ export default function LoginPage() {
                 onPress={() => router.push("/change-password")}
                 className="py-2"
               >
-                <Text className="text-blue-600 text-center font-medium">
+                <Text style={{ color: colors.primary }} className="text-center font-medium">
                   ¿Olvidaste tu contraseña?
                 </Text>
               </TouchableOpacity>
@@ -141,7 +178,8 @@ export default function LoginPage() {
             />
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }

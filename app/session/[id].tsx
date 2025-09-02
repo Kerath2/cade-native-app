@@ -9,6 +9,7 @@ import {
   Alert,
   useColorScheme,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, router } from 'expo-router';
 import { 
   Heart, 
@@ -49,6 +50,14 @@ export default function SessionDetailPage() {
   const [loading, setLoading] = useState(true);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const getBackgroundGradient = () => {
+    if (colorScheme === "dark") {
+      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
+    } else {
+      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
+    }
+  };
 
   useEffect(() => {
     loadSession();
@@ -173,7 +182,14 @@ export default function SessionDetailPage() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.backgroundSecondary }}>
+    <LinearGradient
+      colors={getBackgroundGradient()}
+      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
+      style={{ flex: 1 }}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
       <ScrollView className="flex-1">
         {/* Header */}
         <View style={{ backgroundColor: colors.background, borderBottomColor: colors.border }} className="px-6 py-6 border-b">
@@ -338,6 +354,7 @@ export default function SessionDetailPage() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
