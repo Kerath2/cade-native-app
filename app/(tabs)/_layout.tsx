@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import FloatingTabBar from '@/components/FloatingTabBar';
+import CustomTabBar from '@/components/CustomTabBar';
 
 // Importar las pantallas
 import IndexScreen from './index';
@@ -14,7 +14,7 @@ const Tab = createBottomTabNavigator();
 export default function TabLayout() {
   return (
     <Tab.Navigator
-      tabBar={(props) => <FloatingTabBar {...props} />}
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -24,6 +24,21 @@ export default function TabLayout() {
       <Tab.Screen name="index" component={IndexScreen} />
       <Tab.Screen name="chat" component={ChatScreen} />
       <Tab.Screen name="favorites" component={FavoritesScreen} />
+      <Tab.Screen
+        name="session/[id]"
+        component={require('../session/[id].tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="speaker/[id]"
+        component={require('../speaker/[id].tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="section/[id]"
+        component={require('../section/[id].tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
     </Tab.Navigator>
   );
 }

@@ -6,9 +6,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
-  useColorScheme,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { User, LogOut, Star, Settings, Info, Shield, HelpCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,24 +14,7 @@ import Colors from '@/constants/Colors';
 
 export default function MorePage() {
   const { logout } = useAuth();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
-  const getCardGradient = () => {
-    if (colorScheme === "dark") {
-      return [colors.primary, colors.brandSecondary];
-    } else {
-      return [colors.primary, colors.primaryAccent];
-    }
-  };
-
-  const getBackgroundGradient = () => {
-    if (colorScheme === "dark") {
-      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
-    } else {
-      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -112,33 +93,31 @@ export default function MorePage() {
   ];
 
   return (
-    <LinearGradient
-      colors={getBackgroundGradient()}
-      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+    <View
+      style={{ flex: 1, backgroundColor: "#2c3c94" }}
     >
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar 
-          barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} 
-          backgroundColor="transparent"
-          translucent={true}
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#2c3c94" }}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#2c3c94"
+          translucent={false}
         />
+        <View style={{ backgroundColor: "#2c3c94", height: 30 }} />
+        <View style={{ flex: 1, backgroundColor: "#eff3f6" }}>
       <View className="px-6 py-6">
-        <Text style={{ color: colors.text }} className="text-2xl font-bold mb-2">
+        <Text style={{ color: Colors.text }} className="text-2xl font-bold mb-2">
           Más opciones
         </Text>
-        <Text style={{ color: colors.textSecondary }} className="text-sm mb-6">
+        <Text style={{ color: Colors.textSecondary }} className="text-sm mb-6">
           Configura tu perfil y preferencias de la aplicación
         </Text>
         
         <View
           style={{
-            backgroundColor: colors.background,
+            backgroundColor: Colors.background,
             borderRadius: 12,
             borderWidth: 1,
-            borderColor: colors.cardBorder,
+            borderColor: Colors.cardBorder,
             overflow: 'hidden',
           }}
           className="shadow-sm"
@@ -147,7 +126,7 @@ export default function MorePage() {
             <TouchableOpacity
               key={index}
               style={{ 
-                borderBottomColor: index !== menuItems.length - 1 ? colors.border : 'transparent'
+                borderBottomColor: index !== menuItems.length - 1 ? Colors.border : 'transparent'
               }}
               className={`p-4 flex-row items-center ${
                 index !== menuItems.length - 1 ? 'border-b' : ''
@@ -156,28 +135,28 @@ export default function MorePage() {
             >
               <View 
                 style={{ 
-                  backgroundColor: item.isDestructive 
-                    ? colors.error + '20' 
-                    : colors.primaryLight 
+                  backgroundColor: item.isDestructive
+                    ? Colors.error + '20'
+                    : Colors.primaryLight 
                 }}
                 className="w-12 h-12 rounded-full items-center justify-center mr-4"
               >
                 <item.icon 
                   size={22} 
-                  color={item.isDestructive ? colors.error : colors.primary} 
+                  color={item.isDestructive ? Colors.error : Colors.primary} 
                 />
               </View>
               
               <View className="flex-1">
                 <Text 
                   style={{ 
-                    color: item.isDestructive ? colors.error : colors.text
+                    color: item.isDestructive ? Colors.error : Colors.text
                   }}
                   className="font-semibold mb-1"
                 >
                   {item.title}
                 </Text>
-                <Text style={{ color: colors.textSecondary }} className="text-sm leading-5">
+                <Text style={{ color: Colors.textSecondary }} className="text-sm leading-5">
                   {item.subtitle}
                 </Text>
               </View>
@@ -187,15 +166,16 @@ export default function MorePage() {
         
         {/* Footer info */}
         <View className="mt-8 items-center">
-          <Text style={{ color: colors.textTertiary }} className="text-xs text-center">
+          <Text style={{ color: Colors.textTertiary }} className="text-xs text-center">
             CADE App v1.0.0
           </Text>
-          <Text style={{ color: colors.textTertiary }} className="text-xs text-center mt-1">
+          <Text style={{ color: Colors.textTertiary }} className="text-xs text-center mt-1">
             Desarrollado para CADE 2025
           </Text>
         </View>
       </View>
+        </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }

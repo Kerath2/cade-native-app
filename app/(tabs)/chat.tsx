@@ -10,9 +10,7 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
-  useColorScheme,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Send, Bot, User } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/Colors";
@@ -30,16 +28,6 @@ export default function ChatPage() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isInputFocused, setInputFocused] = useState(false);
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme === "dark" ? "dark" : "light"];
-
-  const getBackgroundGradient = () => {
-    if (colorScheme === "dark") {
-      return ['rgb(45,60,150)', 'rgb(35,45,120)', 'rgb(25,35,90)'];
-    } else {
-      return ['#f53b43', 'rgb(255,217,224)', 'rgb(255,255,255)'];
-    }
-  };
 
   useEffect(() => {
     // Add welcome message
@@ -101,17 +89,17 @@ export default function ChatPage() {
     >
       {!item.isUser && (
         <View
-          style={{ backgroundColor: colors.primary }}
+          style={{ backgroundColor: Colors.primary }}
           className="w-8 h-8 rounded-full items-center justify-center mr-3 mt-1"
         >
-          <Bot size={16} color={colors.textInverted} />
+          <Bot size={16} color="#FFFFFF" />
         </View>
       )}
 
       <View
         style={{
-          backgroundColor: item.isUser ? colors.primary : colors.cardBackground,
-          borderColor: item.isUser ? colors.primary : colors.border,
+          backgroundColor: item.isUser ? Colors.primary : Colors.cardBackground,
+          borderColor: item.isUser ? Colors.primary : Colors.border,
           maxWidth: "75%",
         }}
         className={`px-4 py-3 rounded-2xl border ${
@@ -120,7 +108,7 @@ export default function ChatPage() {
       >
         <Text
           style={{
-            color: item.isUser ? colors.textInverted : colors.text,
+            color: item.isUser ? "#FFFFFF" : Colors.text,
           }}
           className="text-base leading-5"
         >
@@ -128,9 +116,7 @@ export default function ChatPage() {
         </Text>
         <Text
           style={{
-            color: item.isUser
-              ? colors.textInverted + "80"
-              : colors.textTertiary,
+            color: item.isUser ? "#FFFFFF80" : "#888888",
           }}
           className="text-xs mt-1"
         >
@@ -140,10 +126,10 @@ export default function ChatPage() {
 
       {item.isUser && (
         <View
-          style={{ backgroundColor: colors.backgroundTertiary }}
+          style={{ backgroundColor: Colors.backgroundTertiary }}
           className="w-8 h-8 rounded-full items-center justify-center ml-3 mt-1"
         >
-          <User size={16} color={colors.primary} />
+          <User size={16} color={Colors.primary} />
         </View>
       )}
     </View>
@@ -152,20 +138,20 @@ export default function ChatPage() {
   const renderTypingIndicator = () => (
     <View style={{ width: "100%" }} className="flex-row justify-start mb-4">
       <View
-        style={{ backgroundColor: colors.primary }}
+        style={{ backgroundColor: Colors.primary }}
         className="w-8 h-8 rounded-full items-center justify-center mr-3 mt-1"
       >
-        <Bot size={16} color={colors.textInverted} />
+        <Bot size={16} color="#FFFFFF" />
       </View>
       <View
         style={{
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.border,
+          backgroundColor: Colors.cardBackground,
+          borderColor: Colors.border,
           maxWidth: "75%",
         }}
         className="border px-4 py-3 rounded-2xl rounded-bl-md"
       >
-        <Text style={{ color: colors.textTertiary }} className="italic">
+        <Text style={{ color: "#888888" }} className="italic">
           Escribiendo...
         </Text>
       </View>
@@ -173,19 +159,15 @@ export default function ChatPage() {
   );
 
   return (
-    <LinearGradient
-      colors={getBackgroundGradient()}
-      locations={colorScheme === "dark" ? [0, 0.5, 1] : [0, 0.2, 1]}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-    >
-      <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#2c3c94" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#2c3c94" }}>
         <StatusBar
-          barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
-          backgroundColor="transparent"
-          translucent={true}
+          barStyle="light-content"
+          backgroundColor="#2c3c94"
+          translucent={false}
         />
+        <View style={{ backgroundColor: "#2c3c94", height: 30 }} />
+        <View style={{ flex: 1, backgroundColor: "#eff3f6" }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{
@@ -197,7 +179,7 @@ export default function ChatPage() {
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
-          style={{ backgroundColor: colors.backgroundSecondary }}
+          style={{ backgroundColor: Colors.backgroundSecondary }}
           className="flex-auto px-2 py-4"
           showsVerticalScrollIndicator={false}
           ListFooterComponent={isLoading ? renderTypingIndicator : null}
@@ -205,21 +187,21 @@ export default function ChatPage() {
 
         <View
           style={{
-            backgroundColor: colors.backgroundSecondary,
-            borderTopColor: colors.border,
-            paddingBottom: isInputFocused ? 0 : 70, // Espacio para el FloatingTabBar solo cuando el input no tiene focus
+            backgroundColor: Colors.backgroundSecondary,
+            borderTopColor: Colors.border,
+            paddingBottom: isInputFocused ? 0 : 70,
           }}
           className="flex-row items-center px-4 py-3 border-t"
         >
           <TextInput
             style={{
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-              color: colors.text,
+              backgroundColor: Colors.background,
+              borderColor: Colors.border,
+              color: Colors.text,
             }}
             className="flex-1 border rounded-full px-4 py-3 mr-3"
             placeholder="Escribe tu mensaje..."
-            placeholderTextColor={colors.textTertiary}
+            placeholderTextColor="#888888"
             value={inputText}
             onChangeText={setInputText}
             onFocus={() => setInputFocused(true)}
@@ -234,8 +216,8 @@ export default function ChatPage() {
             style={{
               backgroundColor:
                 inputText.trim() && !isLoading
-                  ? colors.primary
-                  : colors.backgroundTertiary,
+                  ? Colors.primary
+                  : Colors.backgroundTertiary,
             }}
             className="w-12 h-12 rounded-full items-center justify-center"
           >
@@ -243,14 +225,15 @@ export default function ChatPage() {
               size={20}
               color={
                 inputText.trim() && !isLoading
-                  ? colors.textInverted
-                  : colors.textTertiary
+                  ? "#FFFFFF"
+                  : "#888888"
               }
             />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+        </View>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }

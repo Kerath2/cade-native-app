@@ -9,7 +9,6 @@ import '../global.css';
 import Toast from 'react-native-toast-message';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AuthGuard } from '@/components/AuthGuard';
-import { useColorScheme } from '@/components/useColorScheme';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,6 +26,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    ZillaSlab: require('../assets/fonts/ZillaSlab-Regular.ttf'),
+    'ZillaSlab-Bold': require('../assets/fonts/ZillaSlab-Bold.ttf'),
     ...FontAwesome.font,
   });
 
@@ -49,34 +50,14 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={DefaultTheme}>
         <AuthGuard>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="login" />
             <Stack.Screen name="change-password" />
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen 
-              name="session/[id]" 
-              options={{ 
-                headerShown: false
-              }} 
-            />
-            <Stack.Screen 
-              name="speaker/[id]" 
-              options={{ 
-                headerShown: false
-              }} 
-            />
-            <Stack.Screen 
-              name="section/[id]" 
-              options={{ 
-                headerShown: false
-              }} 
-            />
           </Stack>
         </AuthGuard>
         <Toast />
