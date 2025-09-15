@@ -14,11 +14,13 @@ import {
 import { router } from "expo-router";
 import { Search, User, Building, ChevronRight } from "lucide-react-native";
 import { speakersApi } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/Colors";
 
 import { Speaker } from "@/types";
 
 export default function SpeakersPage() {
+  const { isAuthenticated } = useAuth();
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [filteredSpeakers, setFilteredSpeakers] = useState<Speaker[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,8 +28,10 @@ export default function SpeakersPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadSpeakers();
-  }, []);
+    if (isAuthenticated) {
+      loadSpeakers();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     filterSpeakers();

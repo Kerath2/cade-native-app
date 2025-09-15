@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  BackHandler,
 } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,6 +27,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
+  useEffect(() => {
+    const backAction = () => {
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -45,126 +58,153 @@ export default function LoginPage() {
   };
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: "#eff3f6" }}
-    >
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar 
-          barStyle='dark-content' 
-          backgroundColor="transparent"
-          translucent={true}
-        />
+    <View style={{ flex: 1 }}>
+      {/* Top 10% - Blue */}
+      <View style={{ flex: 0.1, backgroundColor: "#2c3c94" }} />
+      {/* Bottom 90% - Beige */}
+      <View style={{ flex: 0.9, backgroundColor: "#eff3f6" }} />
+
+      {/* Content overlay */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="#2c3c94"
+            translucent={false}
+          />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
         >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Logo Section */}
-          <View className="w-full">
-            <Image source={Logo} className="w-full h-64" resizeMode="contain" />
-          </View>
-          <View className="flex-1 px-6 pt-8">
-            {/* Login Form */}
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Logo Section */}
             <View className="w-full">
-              <Text style={{ color: Colors.text }} className="text-2xl font-bold mb-6 text-center">
-                Iniciar Sesión
-              </Text>
-
-              {/* Email Input */}
-              <View className="mb-4">
-                <Text style={{ color: Colors.text }} className="mb-2 font-medium">
-                  Correo electrónico
+              <Image
+                source={Logo}
+                className="w-full h-64"
+                resizeMode="contain"
+              />
+            </View>
+            <View className="flex-1 px-6 pt-8">
+              {/* Login Form */}
+              <View className="w-full">
+                <Text
+                  style={{ color: Colors.text }}
+                  className="text-2xl font-bold mb-6 text-center"
+                >
+                  Iniciar Sesión
                 </Text>
-                <TextInput
-                  style={{ 
-                    backgroundColor: Colors.background,
-                    borderColor: Colors.border,
-                    color: Colors.text
-                  }}
-                  className="border rounded-lg px-4 py-3"
-                  placeholder="Ingrese su correo"
-                  placeholderTextColor={Colors.textTertiary}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
 
-              {/* Password Input */}
-              <View className="mb-6">
-                <Text style={{ color: Colors.text }} className="mb-2 font-medium">
-                  Contraseña
-                </Text>
-                <View className="relative">
+                {/* Email Input */}
+                <View className="mb-4">
+                  <Text
+                    style={{ color: Colors.text }}
+                    className="mb-2 font-medium"
+                  >
+                    Correo electrónico
+                  </Text>
                   <TextInput
-                    style={{ 
-                      backgroundColor: Colors.background,
+                    style={{
+                      backgroundColor: '#FFFFFF',
                       borderColor: Colors.border,
-                      color: Colors.text
+                      color: Colors.text,
                     }}
-                    className="border rounded-lg px-4 py-3 pr-12"
-                    placeholder="Ingrese su contraseña"
-                    placeholderTextColor={Colors.textTertiary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
+                    className="border rounded-lg px-4 py-3"
+                    placeholder="Ingrese su correo"
+                    placeholderTextColor="#808080"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
-                  <TouchableOpacity
-                    className="absolute right-3 top-3"
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff size={20} color={Colors.textTertiary} />
-                    ) : (
-                      <Eye size={20} color={Colors.textTertiary} />
-                    )}
-                  </TouchableOpacity>
                 </View>
+
+                {/* Password Input */}
+                <View className="mb-6">
+                  <Text
+                    style={{ color: Colors.text }}
+                    className="mb-2 font-medium"
+                  >
+                    Contraseña
+                  </Text>
+                  <View className="relative">
+                    <TextInput
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderColor: Colors.border,
+                        color: Colors.text,
+                      }}
+                      className="border rounded-lg px-4 py-3 pr-12"
+                      placeholder="Ingrese su contraseña"
+                      placeholderTextColor="#808080"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    <TouchableOpacity
+                      className="absolute right-3 top-3"
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} color={Colors.textTertiary} />
+                      ) : (
+                        <Eye size={20} color={Colors.textTertiary} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Login Button */}
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: loading
+                      ? Colors.backgroundTertiary
+                      : Colors.primary,
+                  }}
+                  className="py-3 px-6 rounded-lg mb-4"
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  <Text
+                    style={{ color: '#FFFFFF' }}
+                    className="text-center font-semibold text-lg"
+                  >
+                    {loading ? "Iniciando..." : "Iniciar Sesión"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Forgot Password Link */}
+                <TouchableOpacity
+                  onPress={() => router.push("/change-password")}
+                  className="py-2"
+                >
+                  <Text
+                    style={{ color: Colors.primary }}
+                    className="text-center font-medium"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Text>
+                </TouchableOpacity>
               </View>
-
-              {/* Login Button */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: loading ? Colors.backgroundTertiary : Colors.primary
-                }}
-                className="py-3 px-6 rounded-lg mb-4"
-                onPress={handleLogin}
-                disabled={loading}
-              >
-                <Text style={{ color: Colors.textInverted }} className="text-center font-semibold text-lg">
-                  {loading ? "Iniciando..." : "Iniciar Sesión"}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Forgot Password Link */}
-              <TouchableOpacity
-                onPress={() => router.push("/change-password")}
-                className="py-2"
-              >
-                <Text style={{ color: Colors.primary }} className="text-center font-medium">
-                  ¿Olvidaste tu contraseña?
-                </Text>
-              </TouchableOpacity>
             </View>
-          </View>
 
-          <View className="w-full justify-center align-center items-center">
-            <Image
-              source={LogoFooter}
-              className="w-64 h-32"
-              resizeMode="contain"
-            />
-          </View>
-        </ScrollView>
+            <View className="w-full justify-center align-center items-center">
+              <Image
+                source={LogoFooter}
+                className="w-64 h-32"
+                resizeMode="contain"
+              />
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     </View>
   );
 }

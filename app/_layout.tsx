@@ -55,7 +55,13 @@ function RootLayoutNav() {
       <ThemeProvider value={DefaultTheme}>
         <AuthGuard>
           <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="login" />
+            <Stack.Screen
+              name="login"
+              options={{
+                gestureEnabled: false,
+                headerBackVisible: false
+              }}
+            />
             <Stack.Screen name="change-password" />
             <Stack.Screen name="(tabs)" />
           </Stack>

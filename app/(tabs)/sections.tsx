@@ -13,11 +13,13 @@ import {
 import { router } from "expo-router";
 import { Search, Calendar, Clock, ChevronRight } from "lucide-react-native";
 import { sectionsApi } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/Colors";
 
 import { Section } from "@/types";
 
 export default function SectionsPage() {
+  const { isAuthenticated } = useAuth();
   const [sections, setSections] = useState<Section[]>([]);
   const [filteredSections, setFilteredSections] = useState<Section[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,8 +27,10 @@ export default function SectionsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadSections();
-  }, []);
+    if (isAuthenticated) {
+      loadSections();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     filterSections();
