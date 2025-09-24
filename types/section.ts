@@ -1,3 +1,5 @@
+import { Speaker } from './user';
+
 export interface Section {
   id: number;
   title: string;
@@ -22,10 +24,20 @@ export interface Session {
   createdAt: string;
   updatedAt: string;
   speakers?: SessionSpeaker[];
+  speakerSessions?: SessionSpeaker[];
   likes?: Like[];
   comments?: Comment[];
   questions?: Question[];
   summary?: Summary;
+  summaries?: Summary[];
+  documents?: Document[];
+  section?: {
+    id: number;
+    title: string;
+  };
+  isLive?: boolean;
+  showDetails?: boolean;
+  hasQuestions?: boolean;
 }
 
 export interface SessionSpeaker {
@@ -33,21 +45,6 @@ export interface SessionSpeaker {
   sessionId: number;
   speakerId: number;
   speaker: Speaker;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Speaker {
-  id: number;
-  name: string;
-  lastName: string;
-  position: string;
-  bio: string;
-  country: string;
-  picture: string;
-  isCommittee: boolean;
-  isHost: boolean;
-  gender: 'MALE' | 'FEMALE' | 'OTHER';
   createdAt: string;
   updatedAt: string;
 }
@@ -95,6 +92,16 @@ export interface Summary {
   id: number;
   content?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  sessionId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Document {
+  id: number;
+  title: string;
+  url: string;
+  type: string;
   sessionId: number;
   createdAt: string;
   updatedAt: string;

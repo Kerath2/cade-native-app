@@ -24,7 +24,11 @@ import {
   ChevronLeft
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { sessionsApi } from '@/services/api/sessions';
+import { sectionsApi } from '@/services/api/sections';
 import Colors from '@/constants/Colors';
+import { formatPeruTime } from '@/utils/formatPeruTime';
+import { Section } from '@/types';
 
 interface SessionDetail {
   id: number;
@@ -49,6 +53,7 @@ export default function SessionDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const [session, setSession] = useState<SessionDetail | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
@@ -60,49 +65,92 @@ export default function SessionDetailPage() {
   const loadSession = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API call to load session details
       console.log('Loading session:', id);
-      // Mock data for now
-      setSession({
-        id: parseInt(id),
-        title: 'El futuro de la economía digital',
-        description: 'Un análisis profundo de cómo la transformación digital está revolucionando los modelos de negocio tradicionales y creando nuevas oportunidades en el mercado peruano. Exploraremos las tendencias emergentes, los desafíos regulatorios y las estrategias de adaptación para empresas de todos los tamaños.',
-        startsAt: '2025-11-15T10:30:00Z',
-        endsAt: '2025-11-15T12:00:00Z',
-        isLive: false,
-        showDetails: true,
-        hasQuestions: true,
-        isFavorited: false,
-        speakers: [
-          {
-            id: 1,
-            name: 'María González',
-            position: 'CEO',
-            company: 'TechCorp Perú',
-            image: null,
-          },
-          {
-            id: 2,
-            name: 'Carlos Rodríguez',
-            position: 'Director de Innovación',
-            company: 'StartupHub',
-            image: null,
-          },
-        ],
-        section: {
-          id: 2,
-          name: 'Transformación Digital',
-        },
-        documents: [
-          {
-            id: 1,
-            name: 'Presentación - Economía Digital 2025',
-            type: 'PDF',
-            size: '2.5 MB',
-          },
-        ],
-        summary: 'En esta sesión se abordaron los principales desafíos y oportunidades de la economía digital...',
-      });
+
+      // Load sections and session data in parallel
+      const [sessionData, sectionsData] = await Promise.all([
+        sessionsApi.getSessionById(parseInt(id)),
+        sectionsApi.getSections()
+      ]);
+
+      console.log('Session data:', sessionData);
+      console.log('Session section:', sessionData.section);
+      console.log('Session sectionId:', sessionData.sectionId);
+      console.log('Available sections:', sectionsData);
+
+      setSections(sectionsData);
+
+      // Transform the API response to match our interface
+      const transformedSession: SessionDetail = {
+        id: sessionData.id,
+        title: sessionData.title,
+        description: sessionData.description || '',
+        startsAt: sessionData.startsAt,
+        endsAt: sessionData.endsAt || sessionData.startsAt,
+        isLive: sessionData.isLive ?? false,
+        showDetails: sessionData.showDetails ?? true,
+        hasQuestions: sessionData.hasQuestions ?? false,
+        isFavorited: false, // TODO: Get user's favorite status from API
+        speakers: (sessionData.speakerSessions || []).map(speakerSession => {
+          const speaker = {
+            id: speakerSession.speaker.id,
+            name: `${speakerSession.speaker.name} ${speakerSession.speaker.lastName}`,
+            position: speakerSession.speaker.position,
+            company: speakerSession.speaker.country, // Using country as company fallback
+            image: speakerSession.speaker.picture,
+          };
+          console.log(`Speaker ${speaker.name} image URL:`, speaker.image);
+          return speaker;
+        }),
+        section: (() => {
+          // First check if we have direct section data
+          if (sessionData.section) {
+            return {
+              id: sessionData.section.id,
+              name: sessionData.section.title,
+            };
+          }
+
+          // Check if we have sectionId
+          if (sessionData.sectionId) {
+            const foundSection = sectionsData.find(section => section.id === sessionData.sectionId);
+            if (foundSection) {
+              return {
+                id: foundSection.id,
+                name: foundSection.title,
+              };
+            }
+          }
+
+          // Try to infer section based on session date range
+          const sessionDate = new Date(sessionData.startsAt);
+          const matchingSection = sectionsData.find(section => {
+            const sectionStart = new Date(section.startsAt);
+            const sectionEnd = new Date(section.endsAt);
+            return sessionDate >= sectionStart && sessionDate <= sectionEnd;
+          });
+
+          if (matchingSection) {
+            console.log('Inferred section for session:', matchingSection.title);
+            return {
+              id: matchingSection.id,
+              name: matchingSection.title,
+            };
+          }
+
+          // Fallback to "Sin sección"
+          return {
+            id: 0,
+            name: 'Sin sección',
+          };
+        })(),
+        documents: sessionData.documents || [],
+        summary: sessionData.summaries && sessionData.summaries.length > 0
+          ? sessionData.summaries[0].content
+          : undefined,
+      };
+
+      setSession(transformedSession);
     } catch (error) {
       console.error('Error loading session:', error);
       Alert.alert('Error', 'No se pudo cargar la información de la sesión');
@@ -136,19 +184,14 @@ export default function SessionDetailPage() {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString('es-PE', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: 'America/Lima',
     });
   };
 
@@ -236,7 +279,7 @@ export default function SessionDetailPage() {
           <View className="flex-row items-center mb-4">
             <Clock size={16} color="#2c3c94" />
             <Text style={{ color: "#2c3c94", fontWeight: "500" }} className="ml-2">
-              {formatTime(session.startsAt)} - {formatTime(session.endsAt)}
+              {formatPeruTime(session.startsAt)} - {formatPeruTime(session.endsAt)}
             </Text>
           </View>
           
@@ -324,9 +367,21 @@ export default function SessionDetailPage() {
                 className="flex-row items-center py-3 border-b last:border-b-0"
                 onPress={() => router.push(`/speaker/${speaker.id}`)}
               >
-                <View style={{ backgroundColor: Colors.backgroundTertiary }} className="w-12 h-12 rounded-full items-center justify-center mr-4">
-                  <Users size={20} color={Colors.textTertiary} />
-                </View>
+                {speaker.image ? (
+                  <Image
+                    source={{ uri: speaker.image }}
+                    className="w-12 h-12 rounded-full mr-4"
+                    style={{ width: 48, height: 48, borderRadius: 24 }}
+                    resizeMode="cover"
+                    onError={() => {
+                      console.log(`Failed to load image for speaker: ${speaker.name}`);
+                    }}
+                  />
+                ) : (
+                  <View style={{ backgroundColor: Colors.backgroundTertiary }} className="w-12 h-12 rounded-full items-center justify-center mr-4">
+                    <Users size={20} color={Colors.textTertiary} />
+                  </View>
+                )}
                 <View className="flex-1">
                   <Text style={{ color: Colors.text }} className="font-semibold">
                     {speaker.name}

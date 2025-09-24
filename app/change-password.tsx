@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { passwordApi } from '@/services/api/password';
 
 export default function ChangePasswordPage() {
   const [step, setStep] = useState(1); // 1: email, 2: otp, 3: new password
@@ -30,9 +31,12 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // TODO: Implement API call to send OTP
-      console.log('Send OTP to:', email);
-      setStep(2);
+      await passwordApi.sendOTP(email);
+      Alert.alert(
+        'Código enviado',
+        'Se ha enviado un código de verificación a tu correo electrónico',
+        [{ text: 'OK', onPress: () => setStep(2) }]
+      );
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Error al enviar el código');
     } finally {
@@ -48,8 +52,7 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // TODO: Implement API call to verify OTP
-      console.log('Verify OTP:', otp);
+      await passwordApi.verifyOTP(email, otp);
       setStep(3);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Código de verificación inválido');
@@ -76,8 +79,7 @@ export default function ChangePasswordPage() {
 
     setLoading(true);
     try {
-      // TODO: Implement API call to reset password
-      console.log('Reset password for:', email);
+      await passwordApi.resetPassword(email, otp, newPassword);
       Alert.alert(
         'Éxito',
         'Contraseña actualizada correctamente',

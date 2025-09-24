@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Send, Bot, User } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { chatApi } from "@/services/api/chat";
 import Colors from "@/constants/Colors";
 
 interface Message {
@@ -55,30 +56,40 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement API call to Watson Assistant
       console.log("Sending message to Watson:", inputText);
 
-      // Mock response for now
-      setTimeout(() => {
-        const botResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `Gracias por tu mensaje: "${userMessage.content}". Esta es una respuesta simulada. En la implementación real, esto se conectará con Watson Assistant.`,
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, botResponse]);
-        setIsLoading(false);
-      }, 1000);
+      const response = await chatApi.sendMessage(userMessage.content);
+
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, botResponse]);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // Fallback response on error
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Lo siento, no pude procesar tu mensaje en este momento. Por favor intenta de nuevo.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorResponse]);
       setIsLoading(false);
     }
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("es-ES", {
+    return date.toLocaleTimeString("es-PE", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "America/Lima",
     });
   };
 

@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { speakersApi } from "@/services/api";
 import { Speaker } from "@/types";
 import Colors from "@/constants/Colors";
+import { formatPeruTime } from "@/utils/formatPeruTime";
 
 interface SpeakerDetail extends Speaker {
   speakerSessions?: {
@@ -32,7 +33,7 @@ interface SpeakerDetail extends Speaker {
       title: string;
       startsAt: string;
       endsAt: string;
-    };
+    } | null;
   }[];
 }
 
@@ -86,28 +87,6 @@ export default function SpeakerDetailPage() {
     return "Speaker";
   };
 
-  const formatTime = (dateString: string) => {
-    try {
-      if (!dateString) return "00:00";
-
-      const date = new Date(dateString);
-
-      // Verificar si la fecha es válida
-      if (isNaN(date.getTime())) {
-        console.warn("Invalid date:", dateString);
-        return "00:00";
-      }
-
-      return date.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false, // Formato 24 horas
-      });
-    } catch (error) {
-      console.error("Error formatting time:", error, dateString);
-      return "00:00";
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
@@ -302,39 +281,46 @@ export default function SpeakerDetailPage() {
               >
                 Sesiones
               </Text>
-              {speaker.speakerSessions.map((speakerSession, index) => (
-                <TouchableOpacity
-                  key={speakerSession.session.id}
-                  style={{ borderBottomColor: "rgba(255,255,255,0.3)" }}
-                  className="py-4 border-b last:border-b-0"
-                  onPress={() =>
-                    router.push(`/session/${speakerSession.session.id}`)
-                  }
-                >
-                  <View className="flex-row justify-between items-start">
-                    <View className="flex-1 mr-3">
-                      <Text
-                        style={{ color: Colors.text, fontFamily: 'Helvetica Neue', fontWeight: 'bold' }}
-                        className="font-semibold mb-1"
-                      >
-                        {speakerSession.session.title}
-                      </Text>
-                      <View className="flex-row items-center">
-                        <Calendar size={14} color="#2c3c94" />
+              {speaker.speakerSessions.map((speakerSession, index) => {
+                // Verificar que session no sea null
+                if (!speakerSession.session) {
+                  return null;
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={speakerSession.session.id}
+                    style={{ borderBottomColor: "rgba(255,255,255,0.3)" }}
+                    className="py-4 border-b last:border-b-0"
+                    onPress={() =>
+                      router.push(`/session/${speakerSession.session!.id}`)
+                    }
+                  >
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-1 mr-3">
                         <Text
-                          style={{ color: "#2c3c94", fontWeight: "500", fontFamily: 'Helvetica Neue' }}
-                          className="text-sm ml-1"
+                          style={{ color: Colors.text, fontFamily: 'Helvetica Neue', fontWeight: 'bold' }}
+                          className="font-semibold mb-1"
                         >
-                          {formatDate(speakerSession.session.startsAt)} •{" "}
-                          {formatTime(speakerSession.session.startsAt)} -{" "}
-                          {formatTime(speakerSession.session.endsAt)}
+                          {speakerSession.session.title}
                         </Text>
+                        <View className="flex-row items-center">
+                          <Calendar size={14} color="#2c3c94" />
+                          <Text
+                            style={{ color: "#2c3c94", fontWeight: "500", fontFamily: 'Helvetica Neue' }}
+                            className="text-sm ml-1"
+                          >
+                            {formatDate(speakerSession.session.startsAt)} •{" "}
+                            {formatPeruTime(speakerSession.session.startsAt)} -{" "}
+                            {formatPeruTime(speakerSession.session.endsAt)}
+                          </Text>
+                        </View>
                       </View>
+                      <ExternalLink size={16} color="#f43c44" />
                     </View>
-                    <ExternalLink size={16} color="#f43c44" />
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 

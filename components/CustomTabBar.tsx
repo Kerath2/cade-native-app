@@ -50,7 +50,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
+              testID={(options as any).tabBarTestID}
               onPress={onPress}
               style={styles.tabButton}
               activeOpacity={1}

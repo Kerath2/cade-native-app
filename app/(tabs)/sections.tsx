@@ -15,6 +15,7 @@ import { Search, Calendar, Clock, ChevronRight } from "lucide-react-native";
 import { sectionsApi } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/Colors";
+import { formatPeruTime } from "@/utils/formatPeruTime";
 
 import { Section } from "@/types";
 
@@ -70,34 +71,13 @@ export default function SectionsPage() {
     setRefreshing(false);
   };
 
-  const formatTime = (dateString: string) => {
-    try {
-      if (!dateString) return "00:00";
-
-      const date = new Date(dateString);
-
-      // Verificar si la fecha es válida
-      if (isNaN(date.getTime())) {
-        console.warn("Invalid date:", dateString);
-        return "00:00";
-      }
-
-      return date.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false, // Formato 24 horas
-      });
-    } catch (error) {
-      console.error("Error formatting time:", error, dateString);
-      return "00:00";
-    }
-  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    return new Date(dateString).toLocaleDateString("es-PE", {
       weekday: "short",
       month: "short",
       day: "numeric",
+      timeZone: "America/Lima",
     });
   };
 
@@ -147,7 +127,7 @@ export default function SectionsPage() {
               style={{ color: "#2c3c94", fontWeight: "500" }}
               className="text-sm ml-1"
             >
-              {formatTime(section.startsAt)} - {formatTime(section.endsAt)}
+              {formatPeruTime(section.startsAt)} - {formatPeruTime(section.endsAt)}
             </Text>
           </View>
 
@@ -209,7 +189,6 @@ export default function SectionsPage() {
                 onRefresh={onRefresh}
                 colors={[Colors.primary]}
                 tintColor={Colors.primary}
-                backgroundColor="transparent"
               />
             }
           >

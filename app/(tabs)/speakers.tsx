@@ -233,7 +233,6 @@ export default function SpeakersPage() {
                 onRefresh={onRefresh}
                 colors={[Colors.primary]}
                 tintColor={Colors.primary}
-                backgroundColor="transparent"
               />
             }
           >

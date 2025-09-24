@@ -27,6 +27,7 @@ import { Section, Speaker } from "@/types";
 import Colors from "@/constants/Colors";
 
 import Logo from "../../assets/images/logoLogin.png";
+import { formatPeruTime } from "@/utils/formatPeruTime";
 
 export default function HomePage() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -76,28 +77,6 @@ export default function HomePage() {
     router.replace("/login");
   };
 
-  const formatTime = (dateString: string) => {
-    try {
-      if (!dateString) return "00:00";
-
-      const date = new Date(dateString);
-
-      // Verificar si la fecha es válida
-      if (isNaN(date.getTime())) {
-        console.warn("Invalid date:", dateString);
-        return "00:00";
-      }
-
-      return date.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false, // Formato 24 horas
-      });
-    } catch (error) {
-      console.error("Error formatting time:", error, dateString);
-      return "00:00";
-    }
-  };
 
   const renderSectionCard = ({ item }: { item: Section }) => (
     <TouchableOpacity
@@ -137,7 +116,7 @@ export default function HomePage() {
               style={{ color: "#2c3c94", fontWeight: "600", fontSize: 12 }}
               className="ml-1"
             >
-              {formatTime(item.startsAt)} - {formatTime(item.endsAt)}
+              {formatPeruTime(item.startsAt)} - {formatPeruTime(item.endsAt)}
             </Text>
           </View>
 
@@ -300,11 +279,12 @@ export default function HomePage() {
                       style={{ color: Colors.textTertiary }}
                       className="text-sm ml-1 font-medium"
                     >
-                      {new Date().toLocaleDateString("es-ES", {
+                      {new Date().toLocaleDateString("es-PE", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
                         day: "numeric",
+                        timeZone: "America/Lima",
                       })}
                     </Text>
                   </View>
@@ -330,7 +310,7 @@ export default function HomePage() {
                 if (item.id === "view-more") {
                   return renderViewMoreCard("sections");
                 }
-                return renderSectionCard({ item });
+                return renderSectionCard({ item: item as Section });
               }}
               keyExtractor={(item) => item.id.toString()}
               horizontal
@@ -370,7 +350,7 @@ export default function HomePage() {
                 if (item.id === "view-more") {
                   return renderViewMoreCard("speakers");
                 }
-                return renderSpeakerCard({ item });
+                return renderSpeakerCard({ item: item as Speaker });
               }}
               keyExtractor={(item) => item.id.toString()}
               horizontal

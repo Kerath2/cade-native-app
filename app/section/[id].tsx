@@ -20,7 +20,9 @@ import {
   ChevronUp,
 } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { sectionsApi } from "@/services/api/sections";
 import Colors from "@/constants/Colors";
+import { formatPeruTime } from "@/utils/formatPeruTime";
 
 interface SectionDetail {
   id: number;
@@ -45,44 +47,32 @@ export default function SectionDetailPage() {
   const loadSection = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API call to load section details
       console.log("Loading section:", id);
-      // Mock data for now
-      setSection({
-        id: parseInt(id),
-        name: "Transformación Digital",
-        description:
-          "Esta sección del evento está dedicada a explorar el impacto transformador de la tecnología en los negocios modernos. Analizaremos cómo las empresas están adoptando nuevas tecnologías para revolucionar sus operaciones, mejorar la experiencia del cliente y crear ventajas competitivas sostenibles.\n\nA través de casos de éxito reales y discusiones estratégicas, los participantes podrán comprender las mejores prácticas para liderar procesos de transformación digital exitosos, identificar oportunidades de innovación y superar los desafíos más comunes en la implementación tecnológica.\n\nEsta sección incluye presentaciones magistrales, paneles de discusión y sesiones interactivas que proporcionarán insights valiosos para ejecutivos que buscan acelerar la digitalización de sus organizaciones.",
-        startsAt: "2025-11-15T10:30:00Z",
-        endsAt: "2025-11-15T15:30:00Z",
-        sessions: [
-          {
-            id: 1,
-            title: "El futuro de la economía digital",
-            description:
-              "Un análisis profundo de cómo la transformación digital está revolucionando los modelos de negocio",
-            startsAt: "2025-11-15T10:30:00Z",
-            endsAt: "2025-11-15T12:00:00Z",
-            isLive: false,
-            speakers: [
-              { id: 1, name: "María González", company: "TechCorp Perú" },
-              { id: 2, name: "Carlos Rodríguez", company: "StartupHub" },
-            ],
-          },
-          {
-            id: 2,
-            title: "Innovación y liderazgo empresarial",
-            description:
-              "Estrategias para liderar la innovación en organizaciones del siglo XXI",
-            startsAt: "2025-11-15T14:00:00Z",
-            endsAt: "2025-11-15T15:30:00Z",
-            isLive: false,
-            speakers: [
-              { id: 1, name: "María González", company: "TechCorp Perú" },
-            ],
-          },
-        ],
-      });
+      const sectionData = await sectionsApi.getSectionById(parseInt(id));
+
+      // Transform the API response to match our interface
+      const transformedSection: SectionDetail = {
+        id: sectionData.id,
+        name: sectionData.title,
+        description: sectionData.description || '',
+        startsAt: sectionData.startsAt,
+        endsAt: sectionData.endsAt,
+        sessions: (sectionData.sessions || []).map(session => ({
+          id: session.id,
+          title: session.title,
+          description: session.description || '',
+          startsAt: session.startsAt,
+          endsAt: session.endsAt || session.startsAt,
+          isLive: session.isLive,
+          speakers: (session.speakerSessions || []).map(speakerSession => ({
+            id: speakerSession.speaker.id,
+            name: `${speakerSession.speaker.name} ${speakerSession.speaker.lastName}`,
+            company: speakerSession.speaker.country,
+          })),
+        })),
+      };
+
+      setSection(transformedSection);
     } catch (error) {
       console.error("Error loading section:", error);
       Alert.alert("Error", "No se pudo cargar la información de la sección");
@@ -91,19 +81,14 @@ export default function SectionDetailPage() {
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("es-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
+    return new Date(dateString).toLocaleDateString("es-PE", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
+      timeZone: "America/Lima",
     });
   };
 
@@ -213,7 +198,7 @@ export default function SectionDetailPage() {
             <View className="flex-row items-center mb-2">
               <Clock size={16} color="#2c3c94" />
               <Text style={{ color: "#2c3c94", fontWeight: "500" }} className="ml-2">
-                {formatTime(section.startsAt)} - {formatTime(section.endsAt)}
+                {formatPeruTime(section.startsAt)} - {formatPeruTime(section.endsAt)}
               </Text>
             </View>
 
@@ -325,8 +310,8 @@ export default function SectionDetailPage() {
                           style={{ color: "#2c3c94", fontWeight: "500" }}
                           className="text-sm ml-1"
                         >
-                          {formatTime(session.startsAt)} -{" "}
-                          {formatTime(session.endsAt)}
+                          {formatPeruTime(session.startsAt)} -{" "}
+                          {formatPeruTime(session.endsAt)}
                         </Text>
                       </View>
 
@@ -358,7 +343,7 @@ export default function SectionDetailPage() {
                           {session.speakers.map(
                             (speaker: any, speakerIndex: number) => (
                               <TouchableOpacity
-                                key={speaker.id}
+                                key={`session-${index}-speaker-${speakerIndex}-${speaker.id}`}
                                 style={{
                                   backgroundColor: "#2c3c94",
                                 }}

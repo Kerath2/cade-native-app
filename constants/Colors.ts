@@ -14,6 +14,8 @@ const Colors = {
 
   // Texto
   text: "#0D0D0D",
+  textSecondary: "#666666",
+  textTertiary: "#888888",
 
   // Bordes y separadores
   border: "#E0E0E0",
