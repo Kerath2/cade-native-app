@@ -8,6 +8,8 @@ import SectionsScreen from './sections';
 import SpeakersScreen from './speakers';
 import ChatScreen from './chat';
 import FavoritesScreen from './favorites';
+import TestUsersScreen from '../test-users';
+import UsersScreen from '../users';
 
 const Tab = createBottomTabNavigator();
 
@@ -37,6 +39,26 @@ export default function TabLayout() {
       <Tab.Screen
         name="section/[id]"
         component={require('../section/[id].tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="users"
+        component={UsersScreen}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="chat-detail"
+        component={require('../chat-detail.tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="assistant"
+        component={require('../assistant/index.tsx').default}
+        options={{ tabBarButton: () => null }}
+      />
+      <Tab.Screen
+        name="test-users"
+        component={TestUsersScreen}
         options={{ tabBarButton: () => null }}
       />
     </Tab.Navigator>

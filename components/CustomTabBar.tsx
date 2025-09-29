@@ -20,6 +20,18 @@ const icons = {
 const tabOrder = ['sections', 'speakers', 'index', 'chat', 'favorites'];
 
 export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  // Check if current route should hide the tab bar
+  const currentRoute = state.routes[state.index];
+  const currentOptions = descriptors[currentRoute.key]?.options;
+
+  // If current route has tabBarButton: () => null, hide the entire tab bar
+  if (currentOptions?.tabBarButton && typeof currentOptions.tabBarButton === 'function') {
+    const tabBarButton = currentOptions.tabBarButton({});
+    if (tabBarButton === null) {
+      return null;
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
