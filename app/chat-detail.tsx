@@ -15,9 +15,9 @@ import {
 import { ArrowLeft, Send, User } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGlobalChat } from '@/contexts/GlobalChatContext';
 import { userChatApi } from '@/services/api/userChat';
-import { socketService } from '@/services/socket/socketService';
-import { Chat, ChatMessage, User as UserType, SocketMessageReceived, SendMessagePayload } from '@/types';
+import { Chat, ChatMessage, User as UserType } from '@/types';
 import Colors from '@/constants/Colors';
 
 export default function ChatDetailPage() {
@@ -25,20 +25,31 @@ export default function ChatDetailPage() {
   const route = useRoute();
   const { userId } = route.params as { userId: string };
   const { user: currentUser } = useAuth();
-  const [chat, setChat] = useState<Chat | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const {
+    chats,
+    loadChat,
+    sendMessage: globalSendMessage,
+    joinChatRoom,
+    leaveChatRoom,
+    setActiveChatId,
+    loading: globalLoading,
+  } = useGlobalChat();
+
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [otherUser, setOtherUser] = useState<UserType | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const userIdNumber = parseInt(userId!, 10);
 
+  // Get current chat and messages from global state
+  const currentChat = currentChatId ? chats.get(currentChatId) : null;
+  const messages = currentChat?.messages || [];
+
   useEffect(() => {
-    loadChat();
-    setupSocket();
+    initializeChat();
 
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -54,19 +65,22 @@ export default function ChatDetailPage() {
     );
 
     return () => {
-      socketService.removeMessageListener();
+      // Cleanup when leaving chat
+      if (currentChatId) {
+        leaveChatRoom(currentChatId);
+        setActiveChatId(null);
+      }
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
   }, [userIdNumber]);
 
   useEffect(() => {
-    if (chat) {
-      const other = chat.users.find(u => u.id !== currentUser?.id);
+    if (currentChat) {
+      const other = currentChat.users.find(u => u.id !== currentUser?.id);
       setOtherUser(other || null);
-      setMessages(chat.messages || []);
     }
-  }, [chat, currentUser]);
+  }, [currentChat, currentUser]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -77,115 +91,87 @@ export default function ChatDetailPage() {
     }
   }, [messages]);
 
-  const setupSocket = async () => {
+  const initializeChat = async () => {
     try {
-      if (!socketService.isConnected()) {
-        await socketService.connect();
-      }
+      console.log('🚀 Initializing chat with user:', userIdNumber);
 
-      if (!socketService.isConnected()) {
-        console.warn('Socket connection failed, messages will be sent without real-time updates');
-        return;
-      }
+      // Try to load existing chat from global state or server
+      const chatData = await loadChat(userIdNumber);
 
-      socketService.onMessageReceived((message: SocketMessageReceived) => {
-        // Only add message if it's for this chat and from the other user
-        if (message.chat.id === chat?.id && message.sender.id !== currentUser?.id) {
-          const newMessage: ChatMessage = {
-            id: message.id,
-            content: message.content,
-            createdAt: message.createdAt,
-            sender: message.sender,
-          };
+      if (chatData) {
+        console.log('✅ Chat loaded:', chatData.id);
+        setCurrentChatId(chatData.id);
+        setActiveChatId(chatData.id);
+        joinChatRoom(chatData.id);
 
-          setMessages(prev => [...prev, newMessage]);
-        }
-      });
-    } catch (error) {
-      console.error('Error setting up socket:', error);
-    }
-  };
-
-  const loadChat = async () => {
-    try {
-      setLoading(true);
-      const chatData = await userChatApi.getConversation(userIdNumber);
-      setChat(chatData);
-    } catch (error) {
-      console.error('Error loading chat:', error);
-
-      // If chat doesn't exist, we can still show the interface
-      // The backend will create it when first message is sent
-      const mockChat: Chat = {
-        id: 0, // Will be assigned by backend
-        users: [],
-        messages: [],
-      };
-      setChat(mockChat);
-
-      // Try to load user info
-      try {
-        const users = await userChatApi.getUsers();
-        const other = users.find(u => u.id === userIdNumber);
+        // Find other user
+        const other = chatData.users.find(u => u.id !== currentUser?.id);
         if (other) {
           setOtherUser(other);
-          mockChat.users = [other];
         }
-      } catch (userError) {
-        console.error('Error loading user:', userError);
-        Alert.alert('Error', 'No se pudo cargar la información del usuario');
-        navigation.goBack();
+      } else {
+        // Chat doesn't exist yet, load user info for when it's created
+        console.log('💭 Chat does not exist yet, loading user info');
+        try {
+          const users = await userChatApi.getUsers();
+          const other = users.find(u => u.id === userIdNumber);
+          if (other) {
+            console.log('👤 Found other user:', other.name);
+            setOtherUser(other);
+          } else {
+            Alert.alert('Error', 'Usuario no encontrado');
+            navigation.goBack();
+          }
+        } catch (userError) {
+          console.error('Error loading user:', userError);
+          Alert.alert('Error', 'No se pudo cargar la información del usuario');
+          navigation.goBack();
+        }
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error initializing chat:', error);
+      Alert.alert('Error', 'No se pudo cargar el chat');
+      navigation.goBack();
     }
   };
 
   const sendMessage = async () => {
     if (!inputText.trim() || sending || !currentUser) return;
 
+    // Prevent sending message to self
+    if (currentUser.id === userIdNumber) {
+      Alert.alert('Error', 'No puedes enviarte mensajes a ti mismo');
+      return;
+    }
+
     const messageContent = inputText.trim();
     setInputText('');
     setSending(true);
 
-    // Add message optimistically to UI
-    const tempMessage: ChatMessage = {
-      id: Date.now(), // Temporary ID
-      content: messageContent,
-      createdAt: new Date().toISOString(),
-      sender: {
-        id: currentUser.id,
-        name: currentUser.name,
-        email: currentUser.email,
-      },
-    };
-
-    setMessages(prev => [...prev, tempMessage]);
-
     try {
-      // Send via socket if connected, otherwise just update UI optimistically
-      if (socketService.isConnected()) {
-        const payload: SendMessagePayload = {
-          receiverId: userIdNumber,
-          content: messageContent,
-        };
-
-        await socketService.sendMessage(payload);
-        console.log('Message sent successfully via socket');
+      // Use global chat provider to send message
+      if (currentChatId) {
+        await globalSendMessage(currentChatId, userIdNumber, messageContent);
       } else {
-        console.warn('Socket not connected, message sent optimistically');
-        // In a real app, you might want to queue messages or use HTTP API as fallback
+        // If no chat exists yet, create one by sending first message
+        // The backend will create the chat and we'll get the chatId back
+        await globalSendMessage(0, userIdNumber, messageContent);
+
+        // Reload chat to get the new chatId
+        const chatData = await loadChat(userIdNumber);
+        if (chatData) {
+          setCurrentChatId(chatData.id);
+          setActiveChatId(chatData.id);
+          joinChatRoom(chatData.id);
+        }
       }
 
+      console.log('✅ Message sent successfully');
       setSending(false);
     } catch (error) {
-      console.error('Error sending message:', error);
-
-      // Remove the optimistic message on error
-      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      console.error('❌ Error sending message:', error);
       setInputText(messageContent); // Restore input
       setSending(false);
-
       Alert.alert('Error', 'No se pudo enviar el mensaje. Intenta de nuevo.');
     }
   };
@@ -256,10 +242,10 @@ export default function ChatDetailPage() {
     );
   };
 
-  if (loading) {
+  if (globalLoading && !currentChat && !otherUser) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background }} className="items-center justify-center">
-        <Text style={{ color: Colors.text }}>Cargando...</Text>
+        <Text style={{ color: Colors.text }}>Cargando chat...</Text>
       </View>
     );
   }

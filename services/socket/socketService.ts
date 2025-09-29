@@ -7,7 +7,8 @@ class SocketService {
   private readonly baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    // Use separate URL for WebSocket connection (direct to backend, no proxy)
+    this.baseURL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhost:8080';
   }
 
   async connect(): Promise<void> {
@@ -15,26 +16,48 @@ class SocketService {
       const token = await storage.getItemAsync('accessToken');
 
       if (!token) {
-        console.warn('No authentication token found, cannot connect to socket');
+        console.warn('🔐 No authentication token found, cannot connect to socket');
         return;
       }
+
+      console.log('🔌 Attempting to connect to socket at:', this.baseURL);
+      console.log('🔑 Using token:', token ? 'Token present' : 'No token');
 
       this.socket = io(this.baseURL, {
         extraHeaders: {
           Authorization: `Bearer ${token}`,
         },
+        transports: ['websocket', 'polling'], // Try both transports
       });
 
       this.socket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('✅ Socket connected successfully');
       });
 
-      this.socket.on('disconnect', () => {
-        console.log('Socket disconnected');
+      this.socket.on('disconnect', (reason) => {
+        console.log('🔴 Socket disconnected:', reason);
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('🔴 Socket connection error:', error);
+        console.error('🔴 Error details:', {
+          message: error.message,
+          description: error.description,
+          context: error.context,
+          type: error.type
+        });
       });
 
       this.socket.on('exception', (error) => {
-        console.error('Socket exception:', error);
+        console.error('🔴 Socket exception:', error);
+      });
+
+      this.socket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
+      });
+
+      this.socket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('🔄 Socket reconnection attempt:', attemptNumber);
       });
 
     } catch (error) {
@@ -52,17 +75,16 @@ class SocketService {
   sendMessage(payload: SendMessagePayload): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.socket) {
-        console.log('Sending message via socket:', payload);
-        this.socket.emit('message', payload, (response: any) => {
-          console.log('Message sent response:', response);
-          if (response && response.success) {
-            resolve();
-          } else {
-            reject(new Error(response?.error || 'Failed to send message'));
-          }
-        });
+        console.log('📤 Sending message via socket:', payload);
+
+        // Send message without expecting callback response
+        // Backend will send 'receiveMessage' and 'messageConfirmed' events separately
+        this.socket.emit('message', payload);
+
+        console.log('✅ Message emit completed');
+        resolve(); // Resolve immediately after emit
       } else {
-        console.warn('Socket not connected');
+        console.warn('🔴 Socket not connected');
         reject(new Error('Socket not connected'));
       }
     });
@@ -95,6 +117,10 @@ class SocketService {
 
   isConnected(): boolean {
     return this.socket?.connected || false;
+  }
+
+  getSocket(): Socket | null {
+    return this.socket;
   }
 }
 

@@ -12,35 +12,28 @@ import {
 import { MessageCircle, Search, Plus, Bot, User } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
-import { userChatApi } from '@/services/api/userChat';
-import { socketService } from '@/services/socket/socketService';
-import { ChatWithLastMessage, User as UserType, SocketMessageReceived } from '@/types';
+import { useGlobalChat } from '@/contexts/GlobalChatContext';
+import { ChatWithLastMessage, User as UserType } from '@/types';
 import Colors from '@/constants/Colors';
 
 export default function ChatPage() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const [conversations, setConversations] = useState<ChatWithLastMessage[]>([]);
+  const { conversations, loadConversations, loading, isConnected } = useGlobalChat();
   const [filteredConversations, setFilteredConversations] = useState<ChatWithLastMessage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     loadConversations();
-    setupSocket();
-
-    return () => {
-      socketService.removeMessageListener();
-    };
-  }, []);
+  }, [loadConversations]);
 
   // Reload conversations when screen comes back into focus
   useFocusEffect(
     useCallback(() => {
-      console.log('Chat screen focused, reloading conversations...');
+      console.log('📱 Chat screen focused, reloading conversations...');
       loadConversations();
-    }, [])
+    }, [loadConversations])
   );
 
   useEffect(() => {
@@ -56,66 +49,6 @@ export default function ChatPage() {
       setFilteredConversations(conversations);
     }
   }, [searchText, conversations]);
-
-  const setupSocket = async () => {
-    try {
-      await socketService.connect();
-
-      if (!socketService.isConnected()) {
-        console.warn('Socket connection failed, chat will work in offline mode');
-        return;
-      }
-
-      socketService.onMessageReceived((message: SocketMessageReceived) => {
-        // Update conversations with new message
-        setConversations(prev => {
-          const updatedConversations = prev.map(conv => {
-            if (conv.id === message.chat.id) {
-              return {
-                ...conv,
-                lastMessage: {
-                  id: message.id,
-                  content: message.content,
-                  createdAt: message.createdAt,
-                  sender: message.sender,
-                },
-              };
-            }
-            return conv;
-          });
-
-          // Sort by last message time
-          return updatedConversations.sort((a, b) => {
-            if (!a.lastMessage) return 1;
-            if (!b.lastMessage) return -1;
-            return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
-          });
-        });
-      });
-    } catch (error) {
-      console.error('Error setting up socket:', error);
-    }
-  };
-
-  const loadConversations = async () => {
-    try {
-      setLoading(true);
-      const data = await userChatApi.getConversations();
-
-      // Sort by last message time
-      const sortedData = data.sort((a, b) => {
-        if (!a.lastMessage) return 1;
-        if (!b.lastMessage) return -1;
-        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
-      });
-
-      setConversations(sortedData);
-    } catch (error) {
-      console.error('Error loading conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);

@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import '../global.css';
 import Toast from 'react-native-toast-message';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { GlobalChatProvider } from '@/contexts/GlobalChatContext';
 import { AuthGuard } from '@/components/AuthGuard';
 
 export {
@@ -52,22 +53,24 @@ export default function RootLayout() {
 function RootLayoutNav() {
   return (
     <AuthProvider>
-      <ThemeProvider value={DefaultTheme}>
-        <AuthGuard>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name="login"
-              options={{
-                gestureEnabled: false,
-                headerBackVisible: false
-              }}
-            />
-            <Stack.Screen name="change-password" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </AuthGuard>
-        <Toast />
-      </ThemeProvider>
+      <GlobalChatProvider>
+        <ThemeProvider value={DefaultTheme}>
+          <AuthGuard>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen
+                name="login"
+                options={{
+                  gestureEnabled: false,
+                  headerBackVisible: false
+                }}
+              />
+              <Stack.Screen name="change-password" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </AuthGuard>
+          <Toast />
+        </ThemeProvider>
+      </GlobalChatProvider>
     </AuthProvider>
   );
 }
