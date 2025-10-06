@@ -95,7 +95,7 @@ export const GlobalChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
-  // Inicializar socket cuando el usuario está autenticado
+  // Inicializar socket y listeners cuando el usuario está autenticado
   // IMPORTANTE: Se desconecta y reconecta cuando cambia el usuario (user.id cambia)
   useEffect(() => {
     if (!user) {
@@ -107,65 +107,9 @@ export const GlobalChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     let mounted = true;
+    let messageListenerRegistered = false;
 
-    const initSocket = async () => {
-      try {
-        console.log('🔌 GlobalChat: Initializing socket for user:', user.id, user.email);
-
-        // Desconectar socket anterior (si existe)
-        if (socketService.isConnected()) {
-          console.log('🔄 GlobalChat: Disconnecting previous socket connection');
-          socketService.disconnect();
-        }
-
-        // Conectar con el nuevo token
-        await socketService.connect();
-
-        if (mounted) {
-          setIsConnected(socketService.isConnected());
-          console.log('🌐 GlobalChat: Socket initialized for user:', user.email);
-        }
-      } catch (error) {
-        console.error('❌ GlobalChat: Failed to initialize socket:', error);
-        if (mounted) {
-          setIsConnected(false);
-        }
-      }
-    };
-
-    initSocket();
-
-    // Listeners de conexión
-    const handleConnect = () => {
-      console.log('✅ GlobalChat: Socket connected for user:', user.email);
-      setIsConnected(true);
-    };
-
-    const handleDisconnect = () => {
-      console.log('🔴 GlobalChat: Socket disconnected');
-      setIsConnected(false);
-    };
-
-    socketService.getSocket()?.on('connect', handleConnect);
-    socketService.getSocket()?.on('disconnect', handleDisconnect);
-
-    return () => {
-      mounted = false;
-      socketService.getSocket()?.off('connect', handleConnect);
-      socketService.getSocket()?.off('disconnect', handleDisconnect);
-      // No desconectar aquí porque puede ser solo unmount del componente
-    };
-  }, [user?.id]); // Dependencia: user.id - se ejecuta cuando cambia el usuario
-
-  // Listener global para actualizar la lista de conversaciones con nuevos mensajes
-  useEffect(() => {
-    if (!user || !isConnected) {
-      console.log('⏸️ GlobalChat: Waiting for socket connection...', { user: !!user, isConnected });
-      return;
-    }
-
-    console.log('🎧 GlobalChat: Registering global message listener for conversations');
-
+    // Handler para mensajes nuevos
     const handleNewMessage = (message: SocketMessageReceived) => {
       console.log('📨 GlobalChat: New message received for conversations update', {
         chatId: message.chat.id,
@@ -197,14 +141,14 @@ export const GlobalChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             lastMessage: newMessage,
           };
 
-          // Re-ordenar por último mensaje
-          const sorted = updated.sort((a, b) => {
+          // Re-ordenar por último mensaje - crear nuevo array ordenado
+          const sorted = [...updated].sort((a, b) => {
             if (!a.lastMessage) return 1;
             if (!b.lastMessage) return -1;
             return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
           });
 
-          console.log('✅ GlobalChat: Conversation updated and sorted');
+          console.log('✅ GlobalChat: Conversation updated and sorted, returning new array');
           return sorted;
         } else {
           // Nueva conversación - recargar desde el servidor
@@ -215,19 +159,107 @@ export const GlobalChatProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
     };
 
-    const socket = socketService.getSocket();
-    if (socket) {
-      console.log('✅ GlobalChat: Socket available, attaching listener');
-      socket.on('receiveMessage', handleNewMessage);
-    } else {
-      console.warn('⚠️ GlobalChat: Socket not available yet');
-    }
+    // Registrar listener de mensajes
+    const registerMessageListener = () => {
+      const socket = socketService.getSocket();
+      if (socket && socket.connected && !messageListenerRegistered) {
+        console.log('🎧 GlobalChat: Registering global message listener');
+        socket.on('receiveMessage', handleNewMessage);
+        messageListenerRegistered = true;
+        console.log('✅ GlobalChat: Global receiveMessage listener registered');
+      } else if (!socket) {
+        console.warn('⚠️ GlobalChat: Socket not available for listener registration');
+      } else if (!socket.connected) {
+        console.warn('⚠️ GlobalChat: Socket not connected yet for listener registration');
+      }
+    };
+
+    const initSocket = async () => {
+      try {
+        console.log('🔌 GlobalChat: Initializing socket for user:', user.id, user.email);
+
+        // Desconectar socket anterior (si existe)
+        if (socketService.isConnected()) {
+          console.log('🔄 GlobalChat: Disconnecting previous socket connection');
+          socketService.disconnect();
+        }
+
+        // Conectar con el nuevo token
+        await socketService.connect();
+
+        if (mounted) {
+          const connected = socketService.isConnected();
+          setIsConnected(connected);
+          console.log('🌐 GlobalChat: Socket initialized for user:', user.email, 'Connected:', connected);
+
+          // Registrar listener de mensajes inmediatamente después de conectar
+          if (connected) {
+            // Pequeño delay para asegurar que el socket esté completamente listo
+            setTimeout(() => {
+              if (mounted) {
+                registerMessageListener();
+              }
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error('❌ GlobalChat: Failed to initialize socket:', error);
+        if (mounted) {
+          setIsConnected(false);
+        }
+      }
+    };
+
+    // Listeners de conexión
+    const handleConnect = () => {
+      console.log('✅ GlobalChat: Socket connected for user:', user.email);
+      if (mounted) {
+        setIsConnected(true);
+        // Registrar listener cuando el socket se conecte
+        setTimeout(() => {
+          if (mounted) {
+            registerMessageListener();
+          }
+        }, 100);
+      }
+    };
+
+    const handleDisconnect = () => {
+      console.log('🔴 GlobalChat: Socket disconnected');
+      if (mounted) {
+        setIsConnected(false);
+        messageListenerRegistered = false;
+      }
+    };
+
+    initSocket();
+
+    // Registrar listeners de conexión DESPUÉS de intentar conectar
+    setTimeout(() => {
+      const socket = socketService.getSocket();
+      if (socket) {
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        console.log('🔗 GlobalChat: Connection event listeners registered');
+      }
+    }, 50);
 
     return () => {
-      console.log('🔇 GlobalChat: Removing global message listener');
-      socketService.getSocket()?.off('receiveMessage', handleNewMessage);
+      console.log('🧹 GlobalChat: Cleaning up for user:', user.email);
+      mounted = false;
+
+      const socket = socketService.getSocket();
+      if (socket) {
+        socket.off('connect', handleConnect);
+        socket.off('disconnect', handleDisconnect);
+        if (messageListenerRegistered) {
+          socket.off('receiveMessage', handleNewMessage);
+          console.log('🔇 GlobalChat: Global receiveMessage listener removed');
+        }
+      }
+      // No desconectar aquí porque puede ser solo unmount del componente
     };
-  }, [user, isConnected, refreshConversations]);
+  }, [user?.id, refreshConversations]); // Dependencias: user.id y refreshConversations
 
   const value: GlobalChatContextType = {
     conversations,

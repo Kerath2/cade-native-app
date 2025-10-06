@@ -40,14 +40,18 @@ export default function ChatPage() {
 
   // Filtrar conversaciones según búsqueda
   useEffect(() => {
+    console.log('🔄 ChatPage: Conversations updated, count:', conversations.length);
+
     if (searchText.trim()) {
       const filtered = conversations.filter((conv) =>
         conv.users.some((u) =>
           u.id !== user?.id && u.name.toLowerCase().includes(searchText.toLowerCase())
         )
       );
+      console.log('🔍 ChatPage: Filtered to', filtered.length, 'conversations');
       setFilteredConversations(filtered);
     } else {
+      console.log('📋 ChatPage: Showing all', conversations.length, 'conversations');
       setFilteredConversations(conversations);
     }
   }, [searchText, conversations, user?.id]);
@@ -89,6 +93,8 @@ export default function ChatPage() {
   const renderConversation = ({ item }: { item: ChatWithLastMessage }) => {
     const otherUser = getOtherUser(item);
     if (!otherUser) return null;
+
+    console.log(`🎨 Rendering conversation ${item.id}, lastMessage:`, item.lastMessage?.content?.substring(0, 20) || 'none');
 
     return (
       <TouchableOpacity
@@ -238,7 +244,8 @@ export default function ChatPage() {
             <FlatList
               data={filteredConversations}
               renderItem={renderConversation}
-              keyExtractor={(item) => `chat-${item.id}`}
+              keyExtractor={(item) => `chat-${item.id}-msg-${item.lastMessage?.id || 'none'}`}
+              extraData={filteredConversations}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}

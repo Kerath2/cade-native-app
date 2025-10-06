@@ -152,10 +152,20 @@ export const useChatRoom = ({ userId, currentUserId }: UseChatRoomParams): UseCh
       }
     };
 
-    socketService.getSocket()?.on('messageConfirmed', handleMessageConfirmed);
+    const socket = socketService.getSocket();
+    if (socket) {
+      // NO remover listeners anteriores
+      socket.on('messageConfirmed', handleMessageConfirmed);
+      console.log('✅ useChatRoom: messageConfirmed listener registered');
+    }
 
     return () => {
-      socketService.getSocket()?.off('messageConfirmed', handleMessageConfirmed);
+      const socket = socketService.getSocket();
+      if (socket) {
+        // Remover SOLO este listener específico
+        socket.off('messageConfirmed', handleMessageConfirmed);
+        console.log('🔇 useChatRoom: messageConfirmed listener removed');
+      }
     };
   }, [loadChat]);
 
@@ -200,13 +210,23 @@ export const useChatRoom = ({ userId, currentUserId }: UseChatRoomParams): UseCh
     };
 
     // Registrar listener
-    socketService.getSocket()?.on('receiveMessage', handleNewMessage);
+    const socket = socketService.getSocket();
+    if (socket) {
+      // NO remover listeners anteriores - permitir coexistencia con GlobalChatContext
+      socket.on('receiveMessage', handleNewMessage);
+      console.log('✅ useChatRoom: receiveMessage listener registered for chat', chatId);
+    }
 
     // Cleanup
     return () => {
       console.log('👋 useChatRoom: Leaving room', chatId);
-      socketService.getSocket()?.emit('leaveChat', chatId);
-      socketService.getSocket()?.off('receiveMessage', handleNewMessage);
+      const socket = socketService.getSocket();
+      if (socket) {
+        socket.emit('leaveChat', chatId);
+        // Remover SOLO este listener específico
+        socket.off('receiveMessage', handleNewMessage);
+        console.log('🔇 useChatRoom: receiveMessage listener removed for chat', chatId);
+      }
     };
   }, [chat?.id]);
 
