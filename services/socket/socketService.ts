@@ -92,12 +92,16 @@ class SocketService {
 
   onMessageReceived(callback: (message: SocketMessageReceived) => void): void {
     if (this.socket) {
+      // Remove any existing listener first to prevent duplicates
+      this.socket.off('receiveMessage');
       this.socket.on('receiveMessage', callback);
     }
   }
 
   onMessageConfirmed(callback: (response: { success: boolean; message: any }) => void): void {
     if (this.socket) {
+      // Remove any existing listener first to prevent duplicates
+      this.socket.off('messageConfirmed');
       this.socket.on('messageConfirmed', callback);
     }
   }

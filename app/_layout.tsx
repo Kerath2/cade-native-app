@@ -66,6 +66,9 @@ function RootLayoutNav() {
               />
               <Stack.Screen name="change-password" />
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="chat-detail" />
+              <Stack.Screen name="users" />
+              <Stack.Screen name="assistant" />
             </Stack>
           </AuthGuard>
           <Toast />

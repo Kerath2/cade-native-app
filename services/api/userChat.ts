@@ -20,7 +20,8 @@ export const userChatApi = {
       return response.data;
     } catch (error) {
       console.error('Error getting conversation:', error);
-      throw new Error('No se pudo cargar la conversación');
+      // Re-throw the original error to preserve axios response
+      throw error;
     }
   },
 

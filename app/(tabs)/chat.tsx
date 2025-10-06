@@ -19,25 +19,27 @@ import Colors from '@/constants/Colors';
 export default function ChatPage() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const { conversations, loadConversations, loading, isConnected } = useGlobalChat();
+  const { conversations, loadConversations, loading } = useGlobalChat();
+
   const [filteredConversations, setFilteredConversations] = useState<ChatWithLastMessage[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
 
+  // Cargar conversaciones al montar
   useEffect(() => {
     loadConversations();
-  }, [loadConversations]);
+  }, []);
 
-  // Reload conversations when screen comes back into focus
+  // Recargar cuando la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
       console.log('📱 Chat screen focused, reloading conversations...');
       loadConversations();
-    }, [loadConversations])
+    }, [])
   );
 
+  // Filtrar conversaciones según búsqueda
   useEffect(() => {
-    // Filter conversations based on search text
     if (searchText.trim()) {
       const filtered = conversations.filter((conv) =>
         conv.users.some((u) =>
@@ -48,18 +50,21 @@ export default function ChatPage() {
     } else {
       setFilteredConversations(conversations);
     }
-  }, [searchText, conversations]);
+  }, [searchText, conversations, user?.id]);
 
+  // Pull to refresh
   const onRefresh = async () => {
     setRefreshing(true);
     await loadConversations();
     setRefreshing(false);
   };
 
+  // Obtener el otro usuario de la conversación
   const getOtherUser = (conversation: ChatWithLastMessage): UserType | undefined => {
     return conversation.users.find(u => u.id !== user?.id);
   };
 
+  // Formatear hora del último mensaje
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -80,6 +85,7 @@ export default function ChatPage() {
     }
   };
 
+  // Renderizar conversación
   const renderConversation = ({ item }: { item: ChatWithLastMessage }) => {
     const otherUser = getOtherUser(item);
     if (!otherUser) return null;
@@ -105,7 +111,7 @@ export default function ChatPage() {
             <User size={24} color="#FFFFFF" />
           </View>
 
-          {/* Content */}
+          {/* Contenido */}
           <View className="flex-1">
             <View className="flex-row justify-between items-center mb-1">
               <Text
@@ -185,7 +191,7 @@ export default function ChatPage() {
             </View>
           </View>
 
-          {/* Search */}
+          {/* Búsqueda */}
           <View className="flex-row items-center">
             <View
               style={{
@@ -207,7 +213,7 @@ export default function ChatPage() {
           </View>
         </View>
 
-        {/* Conversations List */}
+        {/* Lista de conversaciones */}
         <View style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}>
           {filteredConversations.length === 0 && !loading ? (
             <View className="flex-1 items-center justify-center px-8">
@@ -232,7 +238,7 @@ export default function ChatPage() {
             <FlatList
               data={filteredConversations}
               renderItem={renderConversation}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => `chat-${item.id}`}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}

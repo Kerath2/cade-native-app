@@ -1,30 +1,24 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { socketService } from '@/services/socket/socketService';
-import { Chat, ChatMessage, SocketMessageReceived, ChatWithLastMessage } from '@/types';
+import { ChatWithLastMessage, SocketMessageReceived } from '@/types';
+
+/**
+ * GlobalChatContext - Maneja solo:
+ * 1. Conexión global del socket
+ * 2. Lista de conversaciones (no mensajes individuales)
+ * 3. Estado de conexión
+ *
+ * Los chats individuales se manejan con el hook useChatRoom
+ */
 
 interface GlobalChatContextType {
-  // Chat management
-  chats: Map<number, Chat>;
+  // Lista de conversaciones
   conversations: ChatWithLastMessage[];
-
-  // Active chat management
-  activeChatId: number | null;
-  setActiveChatId: (chatId: number | null) => void;
-
-  // Message management
-  sendMessage: (chatId: number, receiverId: number, content: string) => Promise<void>;
-  addMessage: (chatId: number, message: ChatMessage) => void;
-
-  // Chat operations
-  loadChat: (userId: number) => Promise<Chat | null>;
   loadConversations: () => Promise<void>;
+  refreshConversations: () => Promise<void>;
 
-  // Socket management
-  joinChatRoom: (chatId: number) => void;
-  leaveChatRoom: (chatId: number) => void;
-
-  // State
+  // Estado
   loading: boolean;
   isConnected: boolean;
 }
@@ -41,307 +35,204 @@ export const useGlobalChat = () => {
 
 export const GlobalChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [chats, setChats] = useState<Map<number, Chat>>(new Map());
   const [conversations, setConversations] = useState<ChatWithLastMessage[]>([]);
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Use refs to avoid stale closures in socket listeners
-  const chatsRef = useRef(chats);
-  const conversationsRef = useRef(conversations);
-  const userRef = useRef(user);
-
-  // Update refs when state changes
+  // Limpiar conversaciones cuando el usuario cambia o hace logout
   useEffect(() => {
-    chatsRef.current = chats;
-  }, [chats]);
+    if (!user) {
+      setConversations([]);
+    }
+  }, [user?.id]);
 
-  useEffect(() => {
-    conversationsRef.current = conversations;
-  }, [conversations]);
+  // Cargar conversaciones
+  const loadConversations = useCallback(async () => {
+    if (loading) return; // Evitar llamadas concurrentes
 
-  useEffect(() => {
-    userRef.current = user;
-  }, [user]);
+    try {
+      setLoading(true);
+      console.log('📥 GlobalChat: Loading conversations...');
 
-  // Initialize socket connection
-  useEffect(() => {
-    if (!user) return;
+      const { userChatApi } = await import('@/services/api/userChat');
+      const data = await userChatApi.getConversations();
 
-    const initializeSocket = async () => {
-      try {
-        if (!socketService.isConnected()) {
-          await socketService.connect();
-        }
-
-        setIsConnected(socketService.isConnected());
-
-        if (socketService.isConnected()) {
-          console.log('🌐 Global chat provider connected to socket');
-          setupSocketListeners();
-        }
-      } catch (error) {
-        console.error('❌ Failed to connect socket in GlobalChatProvider:', error);
-        setIsConnected(false);
-      }
-    };
-
-    initializeSocket();
-
-    return () => {
-      cleanupSocketListeners();
-    };
-  }, [user]);
-
-  const setupSocketListeners = useCallback(() => {
-    // Global message listener - handles ALL incoming messages
-    socketService.onMessageReceived((message: SocketMessageReceived) => {
-      console.log('📨 Global message received:', {
-        chatId: message.chat.id,
-        from: message.sender.name,
-        content: message.content.substring(0, 50) + '...'
+      // Ordenar por último mensaje
+      const sorted = data.sort((a, b) => {
+        if (!a.lastMessage) return 1;
+        if (!b.lastMessage) return -1;
+        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
       });
 
-      const currentUser = userRef.current;
-      if (!currentUser || message.sender.id === currentUser.id) {
-        return; // Ignore own messages
+      console.log('✅ GlobalChat: Loaded', sorted.length, 'conversations');
+      setConversations(sorted);
+    } catch (error) {
+      console.error('❌ GlobalChat: Error loading conversations:', error);
+      setConversations([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading]);
+
+  // Refrescar conversaciones (permite llamadas concurrentes)
+  const refreshConversations = useCallback(async () => {
+    try {
+      console.log('🔄 GlobalChat: Refreshing conversations...');
+
+      const { userChatApi } = await import('@/services/api/userChat');
+      const data = await userChatApi.getConversations();
+
+      const sorted = data.sort((a, b) => {
+        if (!a.lastMessage) return 1;
+        if (!b.lastMessage) return -1;
+        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
+      });
+
+      console.log('✅ GlobalChat: Refreshed', sorted.length, 'conversations');
+      setConversations(sorted);
+    } catch (error) {
+      console.error('❌ GlobalChat: Error refreshing conversations:', error);
+    }
+  }, []);
+
+  // Inicializar socket cuando el usuario está autenticado
+  // IMPORTANTE: Se desconecta y reconecta cuando cambia el usuario (user.id cambia)
+  useEffect(() => {
+    if (!user) {
+      // Si no hay usuario, desconectar socket
+      console.log('🔴 GlobalChat: No user, disconnecting socket');
+      socketService.disconnect();
+      setIsConnected(false);
+      return;
+    }
+
+    let mounted = true;
+
+    const initSocket = async () => {
+      try {
+        console.log('🔌 GlobalChat: Initializing socket for user:', user.id, user.email);
+
+        // Desconectar socket anterior (si existe)
+        if (socketService.isConnected()) {
+          console.log('🔄 GlobalChat: Disconnecting previous socket connection');
+          socketService.disconnect();
+        }
+
+        // Conectar con el nuevo token
+        await socketService.connect();
+
+        if (mounted) {
+          setIsConnected(socketService.isConnected());
+          console.log('🌐 GlobalChat: Socket initialized for user:', user.email);
+        }
+      } catch (error) {
+        console.error('❌ GlobalChat: Failed to initialize socket:', error);
+        if (mounted) {
+          setIsConnected(false);
+        }
       }
+    };
 
-      // Update specific chat if it's loaded
-      const currentChats = chatsRef.current;
-      if (currentChats.has(message.chat.id)) {
-        setChats(prev => {
-          const newChats = new Map(prev);
-          const chat = newChats.get(message.chat.id);
-          if (chat) {
-            const newMessage: ChatMessage = {
-              id: message.id,
-              content: message.content,
-              createdAt: message.createdAt,
-              sender: message.sender,
-            };
+    initSocket();
 
-            // Avoid duplicates
-            const exists = chat.messages.some(msg => msg.id === newMessage.id);
-            if (!exists) {
-              chat.messages = [...chat.messages, newMessage];
-              newChats.set(message.chat.id, { ...chat });
-            }
-          }
-          return newChats;
-        });
-      }
+    // Listeners de conexión
+    const handleConnect = () => {
+      console.log('✅ GlobalChat: Socket connected for user:', user.email);
+      setIsConnected(true);
+    };
 
-      // Update conversations list
+    const handleDisconnect = () => {
+      console.log('🔴 GlobalChat: Socket disconnected');
+      setIsConnected(false);
+    };
+
+    socketService.getSocket()?.on('connect', handleConnect);
+    socketService.getSocket()?.on('disconnect', handleDisconnect);
+
+    return () => {
+      mounted = false;
+      socketService.getSocket()?.off('connect', handleConnect);
+      socketService.getSocket()?.off('disconnect', handleDisconnect);
+      // No desconectar aquí porque puede ser solo unmount del componente
+    };
+  }, [user?.id]); // Dependencia: user.id - se ejecuta cuando cambia el usuario
+
+  // Listener global para actualizar la lista de conversaciones con nuevos mensajes
+  useEffect(() => {
+    if (!user || !isConnected) {
+      console.log('⏸️ GlobalChat: Waiting for socket connection...', { user: !!user, isConnected });
+      return;
+    }
+
+    console.log('🎧 GlobalChat: Registering global message listener for conversations');
+
+    const handleNewMessage = (message: SocketMessageReceived) => {
+      console.log('📨 GlobalChat: New message received for conversations update', {
+        chatId: message.chat.id,
+        messageId: message.id,
+        from: message.sender.name,
+        senderId: message.sender.id,
+        content: message.content.substring(0, 30),
+      });
+
+      // Actualizar la lista de conversaciones
       setConversations(prev => {
-        const existingIndex = prev.findIndex(conv => conv.id === message.chat.id);
-        const newMessage: ChatMessage = {
+        console.log('📋 GlobalChat: Current conversations count:', prev.length);
+        const chatIndex = prev.findIndex(conv => conv.id === message.chat.id);
+        console.log('📋 GlobalChat: Chat index in conversations:', chatIndex);
+
+        const newMessage = {
           id: message.id,
           content: message.content,
           createdAt: message.createdAt,
           sender: message.sender,
         };
 
-        if (existingIndex >= 0) {
-          // Update existing conversation
+        if (chatIndex >= 0) {
+          // Actualizar conversación existente
+          console.log('✏️ GlobalChat: Updating existing conversation at index:', chatIndex);
           const updated = [...prev];
-          updated[existingIndex] = {
-            ...updated[existingIndex],
+          updated[chatIndex] = {
+            ...updated[chatIndex],
             lastMessage: newMessage,
           };
 
-          // Sort by last message time
-          return updated.sort((a, b) => {
+          // Re-ordenar por último mensaje
+          const sorted = updated.sort((a, b) => {
             if (!a.lastMessage) return 1;
             if (!b.lastMessage) return -1;
             return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
           });
+
+          console.log('✅ GlobalChat: Conversation updated and sorted');
+          return sorted;
         } else {
-          // New conversation - reload from server
-          console.log('🆕 New conversation detected, reloading...');
-          loadConversations();
+          // Nueva conversación - recargar desde el servidor
+          console.log('🆕 GlobalChat: New conversation detected, reloading...');
+          refreshConversations();
           return prev;
         }
       });
-    });
-
-    // Connection status listeners
-    socketService.getSocket()?.on('connect', () => {
-      console.log('✅ Global chat socket connected');
-      setIsConnected(true);
-    });
-
-    socketService.getSocket()?.on('disconnect', () => {
-      console.log('🔴 Global chat socket disconnected');
-      setIsConnected(false);
-    });
-
-    socketService.getSocket()?.on('reconnect', () => {
-      console.log('🔄 Global chat socket reconnected');
-      setIsConnected(true);
-      // Rejoin active chat room if any
-      if (activeChatId) {
-        joinChatRoom(activeChatId);
-      }
-    });
-
-  }, [activeChatId]);
-
-  const cleanupSocketListeners = useCallback(() => {
-    socketService.removeMessageListener();
-    socketService.getSocket()?.off('connect');
-    socketService.getSocket()?.off('disconnect');
-    socketService.getSocket()?.off('reconnect');
-  }, []);
-
-  const joinChatRoom = useCallback((chatId: number) => {
-    if (socketService.isConnected()) {
-      console.log(`👥 Joining chat room: ${chatId}`);
-      socketService.getSocket()?.emit('joinChat', chatId);
-    }
-  }, []);
-
-  const leaveChatRoom = useCallback((chatId: number) => {
-    if (socketService.isConnected()) {
-      console.log(`👋 Leaving chat room: ${chatId}`);
-      socketService.getSocket()?.emit('leaveChat', chatId);
-    }
-  }, []);
-
-  const sendMessage = useCallback(async (chatId: number, receiverId: number, content: string) => {
-    if (!user) throw new Error('User not authenticated');
-
-    // Add optimistic message to local state
-    const tempMessage: ChatMessage = {
-      id: Date.now(), // Temporary ID
-      content,
-      createdAt: new Date().toISOString(),
-      sender: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
     };
 
-    // Update local chat
-    setChats(prev => {
-      const newChats = new Map(prev);
-      const chat = newChats.get(chatId);
-      if (chat) {
-        chat.messages = [...chat.messages, tempMessage];
-        newChats.set(chatId, { ...chat });
-      }
-      return newChats;
-    });
-
-    try {
-      if (socketService.isConnected()) {
-        await socketService.sendMessage({
-          receiverId,
-          content,
-        });
-        console.log('✅ Message sent successfully');
-      } else {
-        throw new Error('Socket not connected');
-      }
-    } catch (error) {
-      console.error('❌ Failed to send message:', error);
-
-      // Remove optimistic message on error
-      setChats(prev => {
-        const newChats = new Map(prev);
-        const chat = newChats.get(chatId);
-        if (chat) {
-          chat.messages = chat.messages.filter(msg => msg.id !== tempMessage.id);
-          newChats.set(chatId, { ...chat });
-        }
-        return newChats;
-      });
-
-      throw error;
+    const socket = socketService.getSocket();
+    if (socket) {
+      console.log('✅ GlobalChat: Socket available, attaching listener');
+      socket.on('receiveMessage', handleNewMessage);
+    } else {
+      console.warn('⚠️ GlobalChat: Socket not available yet');
     }
-  }, [user]);
 
-  const addMessage = useCallback((chatId: number, message: ChatMessage) => {
-    setChats(prev => {
-      const newChats = new Map(prev);
-      const chat = newChats.get(chatId);
-      if (chat) {
-        // Avoid duplicates
-        const exists = chat.messages.some(msg => msg.id === message.id);
-        if (!exists) {
-          chat.messages = [...chat.messages, message];
-          newChats.set(chatId, { ...chat });
-        }
-      }
-      return newChats;
-    });
-  }, []);
-
-  const loadChat = useCallback(async (userId: number): Promise<Chat | null> => {
-    try {
-      setLoading(true);
-      console.log('📥 Loading chat for user:', userId);
-
-      // Import here to avoid circular dependency
-      const { userChatApi } = await import('@/services/api/userChat');
-      const chatData = await userChatApi.getConversation(userId);
-
-      console.log('✅ Chat loaded successfully:', chatData.id);
-
-      // Store in global state
-      setChats(prev => {
-        const newChats = new Map(prev);
-        newChats.set(chatData.id, chatData);
-        return newChats;
-      });
-
-      return chatData;
-    } catch (error) {
-      console.error('❌ Error loading chat:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadConversations = useCallback(async () => {
-    try {
-      setLoading(true);
-      console.log('📥 Loading conversations...');
-
-      // Import here to avoid circular dependency
-      const { userChatApi } = await import('@/services/api/userChat');
-      const data = await userChatApi.getConversations();
-
-      // Sort by last message time
-      const sortedData = data.sort((a, b) => {
-        if (!a.lastMessage) return 1;
-        if (!b.lastMessage) return -1;
-        return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
-      });
-
-      console.log('✅ Conversations loaded:', sortedData.length);
-      setConversations(sortedData);
-    } catch (error) {
-      console.error('❌ Error loading conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    return () => {
+      console.log('🔇 GlobalChat: Removing global message listener');
+      socketService.getSocket()?.off('receiveMessage', handleNewMessage);
+    };
+  }, [user, isConnected, refreshConversations]);
 
   const value: GlobalChatContextType = {
-    chats,
     conversations,
-    activeChatId,
-    setActiveChatId,
-    sendMessage,
-    addMessage,
-    loadChat,
     loadConversations,
-    joinChatRoom,
-    leaveChatRoom,
+    refreshConversations,
     loading,
     isConnected,
   };

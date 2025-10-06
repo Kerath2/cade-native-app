@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,189 +10,117 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Keyboard,
+  ActivityIndicator,
 } from 'react-native';
-import { ArrowLeft, Send, User } from 'lucide-react-native';
+import { ArrowLeft, Send, User, Trash2 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalChat } from '@/contexts/GlobalChatContext';
-import { userChatApi } from '@/services/api/userChat';
-import { Chat, ChatMessage, User as UserType } from '@/types';
+import { useChatRoom } from '@/hooks/useChatRoom';
+import { ChatMessage } from '@/types';
 import Colors from '@/constants/Colors';
+
+/**
+ * Pantalla de chat individual
+ *
+ * Usa el hook useChatRoom para toda la lógica de negocio
+ * Este componente solo se encarga de la UI
+ */
 
 export default function ChatDetailPage() {
   const navigation = useNavigation();
   const route = useRoute();
   const { userId } = route.params as { userId: string };
   const { user: currentUser } = useAuth();
-  const {
-    chats,
-    loadChat,
-    sendMessage: globalSendMessage,
-    joinChatRoom,
-    leaveChatRoom,
-    setActiveChatId,
-    loading: globalLoading,
-  } = useGlobalChat();
 
+  const userIdNumber = parseInt(userId, 10);
+
+  // Hook personalizado que maneja toda la lógica del chat
+  const {
+    chat,
+    messages,
+    otherUser,
+    loading,
+    sending,
+    error,
+    sendMessage,
+    refresh,
+  } = useChatRoom({
+    userId: userIdNumber,
+    currentUserId: currentUser?.id || 0,
+  });
+
+  // Estado local UI
   const [inputText, setInputText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [otherUser, setOtherUser] = useState<UserType | null>(null);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
-  const userIdNumber = parseInt(userId!, 10);
-
-  // Get current chat and messages from global state
-  const currentChat = currentChatId ? chats.get(currentChatId) : null;
-  const messages = currentChat?.messages || [];
-
+  // Scroll automático cuando llegan nuevos mensajes
   useEffect(() => {
-    initializeChat();
-
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardHeight(0);
-      }
-    );
-
-    return () => {
-      // Cleanup when leaving chat
-      if (currentChatId) {
-        leaveChatRoom(currentChatId);
-        setActiveChatId(null);
-      }
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, [userIdNumber]);
-
-  useEffect(() => {
-    if (currentChat) {
-      const other = currentChat.users.find(u => u.id !== currentUser?.id);
-      setOtherUser(other || null);
-    }
-  }, [currentChat, currentUser]);
-
-  useEffect(() => {
-    // Scroll to bottom when messages change
     if (messages.length > 0) {
+      // Pequeño delay para asegurar que el FlatList se ha renderizado
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages]);
+  }, [messages.length]);
 
-  const initializeChat = async () => {
-    try {
-      console.log('🚀 Initializing chat with user:', userIdNumber);
+  // Manejar envío de mensaje
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || sending) return;
 
-      // Try to load existing chat from global state or server
-      const chatData = await loadChat(userIdNumber);
-
-      if (chatData) {
-        console.log('✅ Chat loaded:', chatData.id);
-        setCurrentChatId(chatData.id);
-        setActiveChatId(chatData.id);
-        joinChatRoom(chatData.id);
-
-        // Find other user
-        const other = chatData.users.find(u => u.id !== currentUser?.id);
-        if (other) {
-          setOtherUser(other);
-        }
-      } else {
-        // Chat doesn't exist yet, load user info for when it's created
-        console.log('💭 Chat does not exist yet, loading user info');
-        try {
-          const users = await userChatApi.getUsers();
-          const other = users.find(u => u.id === userIdNumber);
-          if (other) {
-            console.log('👤 Found other user:', other.name);
-            setOtherUser(other);
-          } else {
-            Alert.alert('Error', 'Usuario no encontrado');
-            navigation.goBack();
-          }
-        } catch (userError) {
-          console.error('Error loading user:', userError);
-          Alert.alert('Error', 'No se pudo cargar la información del usuario');
-          navigation.goBack();
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error initializing chat:', error);
-      Alert.alert('Error', 'No se pudo cargar el chat');
-      navigation.goBack();
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!inputText.trim() || sending || !currentUser) return;
-
-    // Prevent sending message to self
-    if (currentUser.id === userIdNumber) {
+    // Prevenir mensaje a uno mismo
+    if (currentUser?.id === userIdNumber) {
       Alert.alert('Error', 'No puedes enviarte mensajes a ti mismo');
       return;
     }
 
     const messageContent = inputText.trim();
-    setInputText('');
-    setSending(true);
+    setInputText(''); // Limpiar input inmediatamente
 
     try {
-      // Use global chat provider to send message
-      if (currentChatId) {
-        await globalSendMessage(currentChatId, userIdNumber, messageContent);
-      } else {
-        // If no chat exists yet, create one by sending first message
-        // The backend will create the chat and we'll get the chatId back
-        await globalSendMessage(0, userIdNumber, messageContent);
-
-        // Reload chat to get the new chatId
-        const chatData = await loadChat(userIdNumber);
-        if (chatData) {
-          setCurrentChatId(chatData.id);
-          setActiveChatId(chatData.id);
-          joinChatRoom(chatData.id);
-        }
-      }
-
-      console.log('✅ Message sent successfully');
-      setSending(false);
-    } catch (error) {
-      console.error('❌ Error sending message:', error);
-      setInputText(messageContent); // Restore input
-      setSending(false);
+      await sendMessage(messageContent);
+    } catch (err) {
+      // Restaurar el texto si falla
+      setInputText(messageContent);
       Alert.alert('Error', 'No se pudo enviar el mensaje. Intenta de nuevo.');
     }
   };
 
+  // Limpiar conversación local
+  const handleClearConversation = () => {
+    Alert.alert(
+      'Limpiar Conversación',
+      '¿Estás seguro de que quieres salir de esta conversación?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Salir',
+          style: 'destructive',
+          onPress: () => navigation.goBack(),
+        },
+      ]
+    );
+  };
+
+  // Formatear hora del mensaje
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('es-PE', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'America/Lima'
+      timeZone: 'America/Lima',
     });
   };
 
+  // Renderizar mensaje individual
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isCurrentUser = item.sender.id === currentUser?.id;
 
     return (
       <View
-        style={{ width: '100%' }}
-        className={`flex-row mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+        style={{ width: '100%', marginBottom: 16 }}
+        className={`flex-row ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
       >
+        {/* Avatar izquierdo (otro usuario) */}
         {!isCurrentUser && (
           <View
             style={{ backgroundColor: Colors.primary }}
@@ -202,6 +130,7 @@ export default function ChatDetailPage() {
           </View>
         )}
 
+        {/* Burbuja del mensaje */}
         <View
           style={{
             backgroundColor: isCurrentUser ? Colors.primary : Colors.cardBackground,
@@ -213,23 +142,20 @@ export default function ChatDetailPage() {
           }`}
         >
           <Text
-            style={{
-              color: isCurrentUser ? '#FFFFFF' : Colors.text,
-            }}
+            style={{ color: isCurrentUser ? '#FFFFFF' : Colors.text }}
             className="text-base leading-5"
           >
             {item.content}
           </Text>
           <Text
-            style={{
-              color: isCurrentUser ? '#FFFFFF80' : '#888888',
-            }}
+            style={{ color: isCurrentUser ? '#FFFFFF80' : '#888888' }}
             className="text-xs mt-1"
           >
             {formatTime(item.createdAt)}
           </Text>
         </View>
 
+        {/* Avatar derecho (usuario actual) */}
         {isCurrentUser && (
           <View
             style={{ backgroundColor: Colors.backgroundTertiary }}
@@ -242,25 +168,45 @@ export default function ChatDetailPage() {
     );
   };
 
-  if (globalLoading && !currentChat && !otherUser) {
+  // Pantalla de carga
+  if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background }} className="items-center justify-center">
-        <Text style={{ color: Colors.text }}>Cargando chat...</Text>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={{ color: Colors.text, marginTop: 16 }}>Cargando chat...</Text>
+      </View>
+    );
+  }
+
+  // Pantalla de error
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: Colors.background }} className="items-center justify-center px-8">
+        <Text style={{ color: Colors.text, fontSize: 18, marginBottom: 16 }}>Error</Text>
+        <Text style={{ color: Colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+          {error}
+        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={{ backgroundColor: Colors.primary }}
+          className="px-6 py-3 rounded-full"
+        >
+          <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Volver</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#2c3c94' }}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="#2c3c94"
-        translucent={false}
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#2c3c94" translucent={false} />
 
       {/* Header */}
       <View style={{ backgroundColor: '#2c3c94' }} className="px-4 py-3 flex-row items-center">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className="mr-4"
+        >
           <ArrowLeft size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
@@ -281,23 +227,36 @@ export default function ChatDetailPage() {
             </Text>
           )}
         </View>
+
+        {/* Botón limpiar */}
+        <TouchableOpacity
+          onPress={handleClearConversation}
+          style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+          className="w-10 h-10 rounded-full items-center justify-center ml-3"
+        >
+          <Trash2 size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       {/* Chat Container */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={0}
       >
-        {/* Messages */}
+        {/* Lista de mensajes */}
         <FlatList
           ref={flatListRef}
           data={messages}
           renderItem={renderMessage}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => `msg-${item.id}`}
           style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
           contentContainerStyle={{ padding: 16, paddingBottom: 0 }}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => {
+            // Scroll automático cuando cambia el tamaño del contenido
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20">
               <Text style={{ color: Colors.textSecondary }} className="text-center">
@@ -343,16 +302,14 @@ export default function ChatDetailPage() {
               maxLength={500}
               editable={!sending}
               returnKeyType="send"
-              onSubmitEditing={sendMessage}
+              onSubmitEditing={handleSendMessage}
             />
             <TouchableOpacity
-              onPress={sendMessage}
+              onPress={handleSendMessage}
               disabled={!inputText.trim() || sending}
               style={{
                 backgroundColor:
-                  inputText.trim() && !sending
-                    ? Colors.primary
-                    : Colors.backgroundTertiary,
+                  inputText.trim() && !sending ? Colors.primary : Colors.backgroundTertiary,
                 width: 48,
                 height: 48,
                 borderRadius: 24,
@@ -360,14 +317,14 @@ export default function ChatDetailPage() {
                 justifyContent: 'center',
               }}
             >
-              <Send
-                size={22}
-                color={
-                  inputText.trim() && !sending
-                    ? '#FFFFFF'
-                    : Colors.textSecondary
-                }
-              />
+              {sending ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Send
+                  size={22}
+                  color={inputText.trim() && !sending ? '#FFFFFF' : Colors.textSecondary}
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
