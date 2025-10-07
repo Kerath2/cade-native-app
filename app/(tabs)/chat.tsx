@@ -4,11 +4,11 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   RefreshControl,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageCircle, Search, Plus, Bot, User } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -103,10 +103,15 @@ export default function ChatPage() {
           navigation.navigate('chat-detail' as any, { userId: otherUser.id });
         }}
         style={{
-          backgroundColor: Colors.background,
+          backgroundColor: 'white',
           borderBottomColor: Colors.border,
+          marginHorizontal: 16,
+          marginBottom: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: Colors.cardBorder,
         }}
-        className="px-4 py-4 border-b"
+        className="px-4 py-4"
       >
         <View className="flex-row items-center">
           {/* Avatar */}
@@ -161,13 +166,11 @@ export default function ChatPage() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#2c3c94' }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#2c3c94' }}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="#2c3c94"
-          translucent={false}
-        />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#2c3c94' }} edges={['top', 'left', 'right']}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#2c3c94"
+      />
 
         {/* Header */}
         <View style={{ backgroundColor: '#2c3c94' }} className="px-4 py-3">
@@ -220,7 +223,7 @@ export default function ChatPage() {
         </View>
 
         {/* Lista de conversaciones */}
-        <View style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}>
+        <View style={{ flex: 1, backgroundColor: '#eff3f6' }}>
           {filteredConversations.length === 0 && !loading ? (
             <View className="flex-1 items-center justify-center px-8">
               <MessageCircle size={64} color={Colors.textSecondary} />
@@ -246,6 +249,7 @@ export default function ChatPage() {
               renderItem={renderConversation}
               keyExtractor={(item) => `chat-${item.id}-msg-${item.lastMessage?.id || 'none'}`}
               extraData={filteredConversations}
+              contentContainerStyle={{ paddingTop: 16, paddingBottom: 16 }}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -257,7 +261,6 @@ export default function ChatPage() {
             />
           )}
         </View>
-      </SafeAreaView>
-    </View>
+    </SafeAreaView>
   );
 }

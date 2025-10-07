@@ -161,7 +161,7 @@ export default function ChatDetailPage() {
   // Pantalla de carga
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }} className="items-center justify-center">
+      <View style={{ flex: 1, backgroundColor: '#eff3f6' }} className="items-center justify-center">
         <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={{ color: Colors.text, marginTop: 16 }}>Cargando chat...</Text>
       </View>
@@ -171,7 +171,7 @@ export default function ChatDetailPage() {
   // Pantalla de error
   if (error) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }} className="items-center justify-center px-8">
+      <View style={{ flex: 1, backgroundColor: '#eff3f6' }} className="items-center justify-center px-8">
         <Text style={{ color: Colors.text, fontSize: 18, marginBottom: 16 }}>Error</Text>
         <Text style={{ color: Colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
           {error}
@@ -231,7 +231,7 @@ export default function ChatDetailPage() {
       {/* Chat Container */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
+        style={{ flex: 1, backgroundColor: '#eff3f6' }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Lista de mensajes */}
@@ -240,7 +240,7 @@ export default function ChatDetailPage() {
           data={[...messages].reverse()}
           renderItem={renderMessage}
           keyExtractor={(item) => `msg-${item.id}`}
-          style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
+          style={{ flex: 1, backgroundColor: '#eff3f6' }}
           contentContainerStyle={{ padding: 16, paddingTop: 0 }}
           showsVerticalScrollIndicator={false}
           inverted
@@ -256,11 +256,11 @@ export default function ChatDetailPage() {
         {/* Input Container */}
         <SafeAreaView
           edges={['bottom']}
-          style={{ backgroundColor: Colors.backgroundSecondary }}
+          style={{ backgroundColor: '#eff3f6' }}
         >
           <View
             style={{
-              backgroundColor: Colors.backgroundSecondary,
+              backgroundColor: '#eff3f6',
               borderTopWidth: 1,
               borderTopColor: Colors.border,
               paddingHorizontal: 16,
@@ -271,7 +271,7 @@ export default function ChatDetailPage() {
             <View className="flex-row items-end">
               <TextInput
                 style={{
-                  backgroundColor: Colors.background,
+                  backgroundColor: 'white',
                   borderColor: Colors.border,
                   color: Colors.text,
                   borderWidth: 1,
@@ -299,21 +299,22 @@ export default function ChatDetailPage() {
                 onPress={handleSendMessage}
                 disabled={!inputText.trim() || sending}
                 style={{
-                  backgroundColor:
-                    inputText.trim() && !sending ? Colors.primary : Colors.backgroundTertiary,
+                  backgroundColor: 'white',
                   width: 48,
                   height: 48,
                   borderRadius: 24,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: Colors.border,
                 }}
               >
                 {sending ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={Colors.primary} />
                 ) : (
                   <Send
                     size={22}
-                    color={inputText.trim() && !sending ? '#FFFFFF' : Colors.textSecondary}
+                    color={inputText.trim() && !sending ? Colors.primary : Colors.textSecondary}
                   />
                 )}
               </TouchableOpacity>
