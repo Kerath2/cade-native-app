@@ -5,13 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Send, User, Trash2 } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,16 +52,6 @@ export default function ChatDetailPage() {
   // Estado local UI
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
-
-  // Scroll automático cuando llegan nuevos mensajes
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Pequeño delay para asegurar que el FlatList se ha renderizado
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages.length]);
 
   // Manejar envío de mensaje
   const handleSendMessage = async () => {
@@ -198,8 +188,8 @@ export default function ChatDetailPage() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#2c3c94' }}>
-      <StatusBar barStyle="light-content" backgroundColor="#2c3c94" translucent={false} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#2c3c94' }} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#2c3c94" />
 
       {/* Header */}
       <View style={{ backgroundColor: '#2c3c94' }} className="px-4 py-3 flex-row items-center">
@@ -240,25 +230,22 @@ export default function ChatDetailPage() {
 
       {/* Chat Container */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Lista de mensajes */}
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={[...messages].reverse()}
           renderItem={renderMessage}
           keyExtractor={(item) => `msg-${item.id}`}
           style={{ flex: 1, backgroundColor: Colors.backgroundSecondary }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 0 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 0 }}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => {
-            // Scroll automático cuando cambia el tamaño del contenido
-            flatListRef.current?.scrollToEnd({ animated: false });
-          }}
+          inverted
           ListEmptyComponent={
-            <View className="flex-1 items-center justify-center py-20">
+            <View className="flex-1 items-center justify-center py-20" style={{ transform: [{ scaleY: -1 }] }}>
               <Text style={{ color: Colors.textSecondary }} className="text-center">
                 Inicia la conversación enviando un mensaje
               </Text>
@@ -267,67 +254,72 @@ export default function ChatDetailPage() {
         />
 
         {/* Input Container */}
-        <View
-          style={{
-            backgroundColor: Colors.backgroundSecondary,
-            borderTopWidth: 1,
-            borderTopColor: Colors.border,
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: Platform.OS === 'ios' ? 34 : 12,
-          }}
+        <SafeAreaView
+          edges={['bottom']}
+          style={{ backgroundColor: Colors.backgroundSecondary }}
         >
-          <View className="flex-row items-end">
-            <TextInput
-              style={{
-                backgroundColor: Colors.background,
-                borderColor: Colors.border,
-                color: Colors.text,
-                borderWidth: 1,
-                borderRadius: 25,
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                marginRight: 12,
-                maxHeight: 100,
-                minHeight: 48,
-                fontSize: 16,
-                textAlignVertical: 'center',
-              }}
-              className="flex-1"
-              placeholder="Escribe tu mensaje..."
-              placeholderTextColor={Colors.textSecondary}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline={true}
-              maxLength={500}
-              editable={!sending}
-              returnKeyType="send"
-              onSubmitEditing={handleSendMessage}
-            />
-            <TouchableOpacity
-              onPress={handleSendMessage}
-              disabled={!inputText.trim() || sending}
-              style={{
-                backgroundColor:
-                  inputText.trim() && !sending ? Colors.primary : Colors.backgroundTertiary,
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {sending ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Send
-                  size={22}
-                  color={inputText.trim() && !sending ? '#FFFFFF' : Colors.textSecondary}
-                />
-              )}
-            </TouchableOpacity>
+          <View
+            style={{
+              backgroundColor: Colors.backgroundSecondary,
+              borderTopWidth: 1,
+              borderTopColor: Colors.border,
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 12,
+            }}
+          >
+            <View className="flex-row items-end">
+              <TextInput
+                style={{
+                  backgroundColor: Colors.background,
+                  borderColor: Colors.border,
+                  color: Colors.text,
+                  borderWidth: 1,
+                  borderRadius: 25,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  marginRight: 12,
+                  maxHeight: 100,
+                  minHeight: 48,
+                  fontSize: 16,
+                  textAlignVertical: 'center',
+                }}
+                className="flex-1"
+                placeholder="Escribe tu mensaje..."
+                placeholderTextColor={Colors.textSecondary}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline={true}
+                maxLength={500}
+                editable={!sending}
+                returnKeyType="send"
+                onSubmitEditing={handleSendMessage}
+              />
+              <TouchableOpacity
+                onPress={handleSendMessage}
+                disabled={!inputText.trim() || sending}
+                style={{
+                  backgroundColor:
+                    inputText.trim() && !sending ? Colors.primary : Colors.backgroundTertiary,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {sending ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Send
+                    size={22}
+                    color={inputText.trim() && !sending ? '#FFFFFF' : Colors.textSecondary}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
